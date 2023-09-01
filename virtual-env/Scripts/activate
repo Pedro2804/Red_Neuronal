@@ -39,6 +39,7 @@ deactivate () {
 deactivate nondestructive
 
 VIRTUAL_ENV="C:\Users\azare\Documents\git\Red_Neuronal\virtual-env"
+#VIRTUAL_ENV="/home/cipher/Documentos/Tareas/Red_Neuronal/virtual-env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
