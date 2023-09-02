@@ -13,4 +13,4 @@ def layer_cnn(N,M,D,size_in,size_filter,reduction,gain):
     if reduction > 0:
         Reg_pool = np.zeros((size_in,size_in,3,D,N))
 
-    return X, Y,W, B,Reg_pool
+    return X, Y, W, B,Reg_pool

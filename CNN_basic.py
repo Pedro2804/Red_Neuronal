@@ -3,6 +3,7 @@ import layer_CNN as CNN
 import layer_FCC as FCC
 import numpy as np
 import random
+import tensorflow as tf
 
 dataset = vds.cargar_archivos()
 
@@ -95,20 +96,117 @@ for K in range(iteraciones):
                             # each iteration
     try_nan = 0;            #Flag to avoid not a number (NaN) values
     
-    
     # Obtain the input image from the training set by random selection
     while try_nan<1:
         #sp  = floor(rand(1,1)*(10e3-1))+1
-        sp = int(random.random() * (10**3 - 1)) + 1 #Variente de la funcion floor
+        sp = int(random.random() * (10**4 - 1)) + 1 #Variente de la funcion floor
         X0 = dataset["Amnist"][:, :, sp]
         # YD = (1+exp(-ZP_lab(:,sp))).^-1   
 
         yd  = dataset["label_A"][sp]
 
         # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
-        YD = FCC.switch(yd)
+        YD = [0,0,0,0,0,0,0,0,0,0]
+        YD[yd] = 1
+        #YD = FCC.switch(yd)
 
         if np.isnan(X0)==0:
             try_nan=1
         else:
             keep1 = sp
+
+    try_nan = 0
+    # Obtain the input image from the test set by random selection
+    while try_nan < 1:
+        #sp_test  = floor(rand(1,1)*(59999-1))+1;
+        sp_test = int(random.random() * (59999 - 1)) + 1
+        X0_test  = dataset["Bmnist"][:, :, sp_test]
+        # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
+
+        yd  = dataset["label_B"][sp_test]
+        YD_test = [0,0,0,0,0,0,0,0,0,0]
+        YD_test[yd] = 1
+        if np.isnan(X0_test)==0:
+            try_nan=1
+        else:
+            keep1 = sp_test
+
+    sourc[K][1] = sp
+    sourc[K][2] = sp_test
+
+    #######################################################################
+    #                         Test run of the CNN
+    #
+    for km in range(cnn_M0):
+        sm1 = 0 * Y0[:, :, 1]
+        for kd in range(cnn_D0):
+            #-----------------------------------------------#
+            am1 = np.zeros((9,9));                          #
+            for q1 in range(9):                             #
+                for q2 in range(9):                         #
+                    am1[q1][q2] = W0[9-q1+1][9-q2+1][kd][km]#
+            #-----------------------------------------------#
+            sm1 += np.conv2(X0_test[:, :, kd], am1, mode='valid')
+
+        Y0[:, :, km] = np.maximum(sm1 + B0[km],0)
+        X1[:, :, km] = Y0[:, :, km]
+        # [X1(:,:,km),R1(:,:,:,km)] = max_pool(Y0(:,:,km),2);
+
+    for km in range(cnn_M1):
+        sm1 = 0 * Y1[:, :, 1]
+        for kd in range(cnn_D1):
+            #-----------------------------------------------#
+            am1 = np.zeros((5,5));                          #
+            for q1 in range(5):                             #
+                for q2 in range(5):                         #
+                    am1[q1][q2] = W1[5-q1+1][5-q2+1][kd][km]#
+            #-----------------------------------------------#
+            sm1 +=np.conv2(X1[:, :, kd], am1, mode='valid')
+        Y1[:, :, km] = np.maximum(sm1 + B1[km],0)
+        X2[:, :, km] = Y1[:, :, km]
+        # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
+
+    for km in range(cnn_M2):
+        sm2 = 0 * Y2[:, :, 1]
+        for kd in range(cnn_D2):
+            #-----------------------------------------------#
+            am2 = np.zeros((3,3))                           #
+            for q1 in range(3):                             #
+                for q2 in range(3):                         #
+                    am2[q1][q2] = W2[3-q1+1][3-q2+1][kd][km]#
+            #-----------------------------------------------#
+            sm2 += np.conv2(X2[:, :, kd],am2, mode = 'valid')
+        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+    X3 = np.reshape(Y2,(Y2.size, 1))
+
+
+    # Verifica si una GPU está disponible
+    if tf.config.list_physical_devices('GPU'):
+        # Mueve las matrices a la GPU
+        X3g = tf.constant(X3, dtype=tf.float32, device="/GPU:0")
+        W3g = tf.constant(W3, dtype=tf.float32, device="/GPU:0")
+    else:
+        print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
+    #X3g = gpuArray(X3);
+    #W3g = gpuArray(W3);
+    Y3g = pagefun(@mtimes,W3g,X3g)
+    Y3  = gather(Y3g)
+    Y3  = np.maximum(Y3 + 1 * B3, 0)
+    
+    X4  = Y3;
+    X4g = gpuArray(X4);
+    W4g = gpuArray(W4);
+    Y4g = pagefun(@mtimes,W4g,X4g);
+    Y4  = gather(Y4g);
+    Y4  = max(Y4 + 1.*B4,0);
+    
+    X5 = Y4;
+    X5g = gpuArray(X5);
+    W5g = gpuArray(W5);
+    Y5g = pagefun(@mtimes,W5g,X5g);
+    Y5  = gather(Y5g);
+    
+    
+    # Y5       = (1+exp(c1.*(-Y5-B5))).^-1;
+    Y5 = exp(c1.*(Y5+B5))./sum(exp(c1.*(Y5+B5)));
+    Etest(K) = 0.5*mean( (YD_test-Y5).^2 );
