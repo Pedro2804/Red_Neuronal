@@ -22,7 +22,6 @@ def cargar_archivos():
         a = b
     return {"Amnist": Amnist, "label_A": label_A, "Bmnist": Bmnist, "label_B": label_B}
 
-
 '''
 a = 0
 for i in range(10):
