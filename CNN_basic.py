@@ -234,4 +234,4 @@ for K in range(iteraciones):
             #LINEA 273 EN CNN_basic.m
 
     else:
-        print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")...
+        print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
