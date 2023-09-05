@@ -138,7 +138,7 @@ for K in range(iteraciones):
     #                         Test run of the CNN
     #
     for km in range(cnn_M0):
-        sm1 = 0 * Y0[:, :, 1]
+        sm1 = np.zeros_like(Y0[:, :, 0])
         for kd in range(cnn_D0):
             #-----------------------------------------------#
             am1 = np.zeros((9,9));                          #
@@ -182,31 +182,56 @@ for K in range(iteraciones):
 
     # Verifica si una GPU está disponible
     if tf.config.list_physical_devices('GPU'):
-        # Mueve las matrices a la GPU
-        X3g = tf.constant(X3, dtype=tf.float32, device="/GPU:0")
-        W3g = tf.constant(W3, dtype=tf.float32, device="/GPU:0")
+        # Mueve las matrices a la GPU y las multiplica
+        with tf.device("/GPU:0"):
+         X3g = tf.constant(X3, dtype=tf.float32)
+         W3g = tf.constant(W3, dtype=tf.float32)
+         Y3g = tf.matmul(W3g, X3g)
+         #Tranfiere de GPU a CPU
+         Y3 = Y3g.numpy
+         #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
+         Y3  = np.maximum(Y3 + 1. * B3, 0)
+
+         X4  = Y3
+         # Mueve las matrices a la GPU y las multiplica
+         X4g = tf.constant(X4, dtype=tf.float32)
+         W4g = tf.constant(W4, dtype=tf.float32)
+         Y4g = tf.matmul(W4g, X4g)
+         #Tranfiere de GPU a CPU
+         Y4 = Y4g.numpy
+         #Función RELU
+         Y4  = np.maximum(Y4 + 1. * B4, 0)
+
+         X5  = Y4
+         # Mueve las matrices a la GPU y las multiplica
+         X5g = tf.constant(X5, dtype=tf.float32)
+         W5g = tf.constant(W5, dtype=tf.float32)
+         Y5g = tf.matmul(W5g, X5g)
+         #Tranfiere de GPU a CPU
+         Y5 = Y5g.numpy
+
+         #Funcion Softmax
+         Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+         #Error cuadrático medio
+         Etest(K) = 0.5*(np.mean((YD_test - Y5)**2))
+
+
+         ###########################################################
+         #                     Test run of the CNN
+         for km in range(cnn_M0):
+            sm1 = np.zeros_like(Y0[:, :, 0])
+            for kd in range(cnn_D0):
+                #-----------------------------------------------#
+                am1 = np.zeros((9, 9))
+                for q1 in range(9):
+                    for q2 in range(9):
+                        am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
+                #-----------------------------------------------#
+                sm1 = sm1 + np.conv2d(X0[:, :, kd], am1, 'valid')
+            Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
+            X1[:, :, km] = Y0[:, :, km]
+
+            #LINEA 273 EN CNN_basic.m
+
     else:
         print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
-    #X3g = gpuArray(X3);
-    #W3g = gpuArray(W3);
-    Y3g = pagefun(@mtimes,W3g,X3g)
-    Y3  = gather(Y3g)
-    Y3  = np.maximum(Y3 + 1 * B3, 0)
-    
-    X4  = Y3;
-    X4g = gpuArray(X4);
-    W4g = gpuArray(W4);
-    Y4g = pagefun(@mtimes,W4g,X4g);
-    Y4  = gather(Y4g);
-    Y4  = max(Y4 + 1.*B4,0);
-    
-    X5 = Y4;
-    X5g = gpuArray(X5);
-    W5g = gpuArray(W5);
-    Y5g = pagefun(@mtimes,W5g,X5g);
-    Y5  = gather(Y5g);
-    
-    
-    # Y5       = (1+exp(c1.*(-Y5-B5))).^-1;
-    Y5 = exp(c1.*(Y5+B5))./sum(exp(c1.*(Y5+B5)));
-    Etest(K) = 0.5*mean( (YD_test-Y5).^2 );
