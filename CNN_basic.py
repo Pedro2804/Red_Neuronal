@@ -213,7 +213,7 @@ for K in range(iteraciones):
          #Funcion Softmax
          Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
          #Error cuadrático medio
-         Etest(K) = 0.5*(np.mean((YD_test - Y5)**2))
+         Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
 
 
          ###########################################################
