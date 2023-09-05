@@ -289,6 +289,7 @@ for K = 1:iteraciones
         X2(:,:,km) = Y1(:,:,km);
         % [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
     end
+    
     for km = 1:cnn_M2
         sm2 = 0.*Y2(:,:,1);
         for kd = 1:cnn_D2

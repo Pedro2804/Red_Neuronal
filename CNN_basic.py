@@ -227,11 +227,38 @@ for K in range(iteraciones):
                     for q2 in range(9):
                         am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
                 #-----------------------------------------------#
-                sm1 = sm1 + np.conv2d(X0[:, :, kd], am1, 'valid')
+                sm1 = sm1 + np.conv2d(X0[:, :, kd], am1, mode = 'valid')
             Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
             X1[:, :, km] = Y0[:, :, km]
 
-            #LINEA 273 EN CNN_basic.m
+            for km in range(cnn_M1):
+                sm1 = 0*Y1[:,:,1]
+                for kd in range(cnn_D1):
+                    #-----------------------------------------------#
+                    am1 = np.zeros((5,5));                          #
+                    for q1 in range(5):                             #
+                        for q2 in range(5):                         #
+                            am1[q1][q2] = W1[5-q1+1][5-q2+1][kd,km] #
+                    #-----------------------------------------------#
+                    sm1 = sm1 + np.conv2(X1[:,:,kd],am1, mode='valid')
+                Y1[:,:,km] = np.maximum(sm1 + B1(km),0)
+                X2[:, :, km] = Y1[:, :, km]
+                # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
+
+                for km in range(cnn_M2):
+                    sm2 = 0*Y2[:, :, 1]
+                    for kd in range(cnn_D2):
+                        #-----------------------------------------------#
+                        am2 = np.zeros((3,3));                          #
+                        for q1 in range(3):                             #
+                            for q2 in range(3):                         #
+                                am2[q1][q2] = W2[3-q1+1][3-q2+1][kd][km]#
+                        #-----------------------------------------------#
+                        sm2 = sm2 + np.conv2(X2[:, :, kd],am2, mode='valid')
+                    Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+                X3 = np.reshape(Y2,[],1)
+
+                
 
     else:
         print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
