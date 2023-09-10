@@ -3,7 +3,9 @@ import layer_CNN as CNN
 import layer_FCC as FCC
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 import tensorflow as tf
+import time
 
 dataset = vds.cargar_archivos()
 
@@ -292,10 +294,50 @@ for K in range(iteraciones):
             YD_neg = YD
             Y5_neg = Y5
 
-            E[K] = 0.5*np.mean((YD-Y5).**2 ) #Linea 338
-            #E(K) = 0.5*mean( (YD-Y5).^2 );
-            #yCNN(:,K) = Y5;
-            #yDPN(:,K) = YD;
+            #Error cuadrático medio
+            E[K] = 0.5 * np.mean((YD - Y5) ** 2 ) #Linea 338
+            #Asigna el contenido a la k columna de la matriz yCNN y yDPN
+            yCNN[:,K] = Y5
+            yDPN[:,K] = YD
+
+            # Visualization of the training process
+            if (K - 1) % 1000 == 999:
+                Q1 = E[K - 999:K + 1]
+                Q2 = Etest[K - 999:K + 1]
+                plt.subplot(1, 2, 1)
+                plt.semilogy(K, np.mean(Q1), 'b.', K, np.mean(Q2), 'r.')#%,K,Last_error,'r.')
+                axf = np.where(Y5_neg == np.max(Y5_neg))[0] -1
+                #Asignar un vector específico a la variable mxmp según el valor de axf
+                cases = {
+                    0: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    1: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                    2: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                    3: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                    4: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                    5: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                    6: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    7: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                    8: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                }
+                mxmp = cases.get(axf)
+
+                [YD_neg, mxmp, np.abs(YD_neg - mxmp)]
+                print(LR)                   # Display the dots of the loss 
+                                            # function, the desired value and 
+                                            # CNN value of the iteration and 
+                                            # the learning rate
+
+                plt.hold(True)
+
+                plt.subplot(1, 2, 2)
+                #Reducir la intensidad de los pixeles a la mitad
+                plt.imshow(X0 * 0.5)
+                #Pausa en ejecución del programa
+                time.sleep(1e-20)
+            
+            # Back propagation error
+      
 
 
     else:
