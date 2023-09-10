@@ -192,7 +192,7 @@ for K in range(iteraciones):
             #Tranfiere de GPU a CPU
             Y3 = Y3g.numpy
             #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+            Y3  = np.maximum(Y3 + 1 * B3, 0)
 
             X4  = Y3
             # Mueve las matrices a la GPU y las multiplica
@@ -202,7 +202,7 @@ for K in range(iteraciones):
             #Tranfiere de GPU a CPU
             Y4 = Y4g.numpy
             #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+            Y4  = np.maximum(Y4 + 1 * B4, 0)
 
             X5  = Y4
             # Mueve las matrices a la GPU y las multiplica
@@ -267,7 +267,7 @@ for K in range(iteraciones):
             #Tranfiere de GPU a CPU
             Y3 = Y3g.numpy
             #Función RELU
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+            Y3  = np.maximum(Y3 + 1 * B3, 0)
 
             X4  = Y3
             # Mueve las matrices a la GPU y las multiplica
@@ -277,7 +277,7 @@ for K in range(iteraciones):
             #Tranfiere de GPU a CPU
             Y4 = Y4g.numpy
             #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+            Y4  = np.maximum(Y4 + 1 * B4, 0)
 
             X5  = Y4
             # Mueve las matrices a la GPU y las multiplica
@@ -337,8 +337,34 @@ for K in range(iteraciones):
                 time.sleep(1e-20)
             
             # Back propagation error
+            if test_set == 0:
+                dE5 = (Y5 - YD) * MT
+                dF5 = c1 * Y5 * (1 - Y5)
+                dC5 = dE5 * dF5
+                # Transferir dC5g a la GPU
+                dC5g = tf.constant(dC5, dtype=tf.float32)
+                #Actualizacion de los pesos
+                dW5 = -LR * (X5.T * dC5)
+
+                dB5 = -LR * dC5
+                dE4g = tf.matmul(W5g.T, dC5g)
+                #Tranfiere de GPU a CPU
+                dE4 = dE4g.numpy
+                dF4 = np.sign(Y4)
+                dC4 = dE4 * dF4
+
+                # Transferir dC4g a la GPU
+                dC4g = tf.constant(dC4, dtype=tf.float32)
+
+                dW4g = tf.matmul(dC4g, X4g.T)
+                #Tranfiere de GPU a CPU
+                dw4 = dW4g.numpy #linea 393
+
+
+
+
+
+
       
-
-
     else:
         print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
