@@ -3,7 +3,11 @@ import layer_CNN as CNN
 import layer_FCC as FCC
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+from scipy.signal import convolve2d
 import tensorflow as tf
+import time
+import math
 
 dataset = vds.cargar_archivos()
 
@@ -190,9 +194,9 @@ for K in range(iteraciones):
             W3g = tf.constant(W3, dtype=tf.float32)
             Y3g = tf.matmul(W3g, X3g)
             #Tranfiere de GPU a CPU
-            Y3 = Y3g.numpy
+            Y3 = Y3g.numpy()
             #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+            Y3  = np.maximum(Y3 + 1 * B3, 0)
 
             X4  = Y3
             # Mueve las matrices a la GPU y las multiplica
@@ -200,9 +204,9 @@ for K in range(iteraciones):
             W4g = tf.constant(W4, dtype=tf.float32)
             Y4g = tf.matmul(W4g, X4g)
             #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
+            Y4 = Y4g.numpy()
             #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+            Y4  = np.maximum(Y4 + 1 * B4, 0)
 
             X5  = Y4
             # Mueve las matrices a la GPU y las multiplica
@@ -210,7 +214,7 @@ for K in range(iteraciones):
             W5g = tf.constant(W5, dtype=tf.float32)
             Y5g = tf.matmul(W5g, X5g)
             #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+            Y5 = Y5g.numpy()
 
             #Funcion Softmax
             Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
@@ -265,9 +269,9 @@ for K in range(iteraciones):
             W3g = tf.constant(W3, dtype=tf.float32)
             Y3g = tf.matmul(W3g, X3g)
             #Tranfiere de GPU a CPU
-            Y3 = Y3g.numpy
+            Y3 = Y3g.numpy()
             #Función RELU
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+            Y3  = np.maximum(Y3 + 1 * B3, 0)
 
             X4  = Y3
             # Mueve las matrices a la GPU y las multiplica
@@ -275,9 +279,9 @@ for K in range(iteraciones):
             W4g = tf.constant(W4, dtype=tf.float32)
             Y4g = tf.matmul(W4g, X4g)
             #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
+            Y4 = Y4g.numpy()
             #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+            Y4  = np.maximum(Y4 + 1 * B4, 0)
 
             X5  = Y4
             # Mueve las matrices a la GPU y las multiplica
@@ -285,7 +289,7 @@ for K in range(iteraciones):
             W5g = tf.constant(W5, dtype=tf.float32)
             Y5g = tf.matmul(W5g, X5g)
             #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+            Y5 = Y5g.numpy()
 
             Y5_past = Y5
             #Funcion Softmax
@@ -294,11 +298,199 @@ for K in range(iteraciones):
             YD_neg = YD
             Y5_neg = Y5
 
-            E[K] = 0.5*np.mean((YD-Y5).**2 ) #Linea 338
-            #E(K) = 0.5*mean( (YD-Y5).^2 );
-            #yCNN(:,K) = Y5;
-            #yDPN(:,K) = YD;
+            #Error cuadrático medio
+            E[K] = 0.5 * np.mean((YD - Y5) ** 2 ) #Linea 338
+            #Asigna el contenido a la k columna de la matriz yCNN y yDPN
+            yCNN[:,K] = Y5
+            yDPN[:,K] = YD
 
+            # Visualization of the training process
+            if (K - 1) % 1000 == 999:
+                Q1 = E[K - 999:K + 1]
+                Q2 = Etest[K - 999:K + 1]
+                plt.subplot(1, 2, 1)
+                plt.semilogy(K, np.mean(Q1), 'b.', K, np.mean(Q2), 'r.')#%,K,Last_error,'r.')
+                axf = np.where(Y5_neg == np.max(Y5_neg))[0] -1
+                #Asignar un vector específico a la variable mxmp según el valor de axf
+                cases = {
+                    0: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    1: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                    2: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                    3: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                    4: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                    5: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                    6: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    7: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                    8: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+                }
+                mxmp = cases.get(axf)
 
+                [YD_neg, mxmp, np.abs(YD_neg - mxmp)]
+                print(LR)                   # Display the dots of the loss 
+                                            # function, the desired value and 
+                                            # CNN value of the iteration and 
+                                            # the learning rate
+
+                plt.hold(True)
+
+                plt.subplot(1, 2, 2)
+                #Reducir la intensidad de los pixeles a la mitad
+                plt.imshow(X0 * 0.5)
+                #Pausa en ejecución del programa
+                time.sleep(1e-20)
+            
+            # Back propagation error
+            if test_set == 0:
+                dE5 = (Y5 - YD) * MT
+                dF5 = c1 * Y5 * (1 - Y5)
+                dC5 = dE5 * dF5
+                # Transferir dC5g a la GPU
+                dC5g = tf.constant(dC5, dtype=tf.float32)
+                #Actualizacion de los pesos
+                dW5 = -LR * (X5.T * dC5)
+
+                dB5 = -LR * dC5
+                dE4g = tf.matmul(W5g.T, dC5g)
+                #Tranfiere de GPU a CPU
+                dE4 = dE4g.numpy()
+                dF4 = np.sign(Y4)
+                dC4 = dE4 * dF4
+
+                # Transferir dC4g a la GPU
+                dC4g = tf.constant(dC4, dtype=tf.float32)
+
+                dW4g = tf.matmul(dC4g, X4g.T)
+                #Tranfiere de GPU a CPU
+                dw4 = dW4g.numpy()
+                dW4 = -LR * dW4
+                dB4 = -LR * dC4g
+                ###
+                dE3g = tf.matmul(W4g.T, dC4g)
+                dE3 = dE3g.numpy()
+                dF3 = np.sign(Y3)
+                dC3 = dE3 * dF3
+                dC3g = tf.constant(dC3, dtype=tf.float32)
+
+                dW3g = tf.matmul(dC3g, X3g.T)
+                dW3 = dW3g.numpy()
+                dW3 = -LR * dW3
+                dB3 = -LR * dC3
+                ###
+                dE2fg = tf.matmul(W3g.T, dC3g)
+                dE2f = dE2f.numpy()
+
+                dE2 = np.reshape(dE2f, (14, 14, 10))
+                dF2 = np.sign(Y2)
+                dC2  = dE2 * dF2
+
+                dW2  = 0 * W2
+                dB2  = 0 * B2
+
+                for km in range(cnn_M2):
+                    #-----------------------------------------------------------#
+                    dCs2 = np.zeros((14,14))                                    #
+                    for q1 in range(1, 14):                                     #
+                        for q2 in range(1, 14):                                 #
+                            dCs2[q1, q2] = dC2[14 - q1 + 1, 14 - q2 + 1, km]    #
+                    #-----------------------------------------------------------#
+                    for kd in range(cnn_D2):
+                        dW2[:, :, kd, km] = -LR * convolve2d(X2[:, :, kd], dCs2, mode='valid')
+                    dB2[km] = -LR*np.sum(np.sum(dCs2))
+                ###
+                dE1p = 0 * X2
+                for kd in range(cnn_D2):
+                    aq1 = 0 * dE1p[:,:,1]
+                    for km in range(cnn_M2):
+                        aq1 = aq1 + convolve2d(dC2[:,:,km],W2[:,:,kd,km], mode='full')
+                    dE1p[:,:,kd] = aq1
+
+                dE1 = dE1p
+                dF1 = np.sign(Y1)
+                dC1 = dE1 * dF1
+
+                dW1  = 0 * W1
+                dB1  = 0 * B1
+
+                for km in range(cnn_M1):
+                    #-----------------------------------------------#
+                    dCs1 = np.zeros((16,16))                        #
+                    for q1 in range(1, 16):                         #
+                        for q2 in range(1, 16):                     #
+                            dCs1[q1,q2] = dC1[16-q1+1,16-q2+1,km]   #
+                    #-----------------------------------------------#
+                    for kd in range(cnn_D1):
+                        dW1[:,:,kd,km] = -LR * convolve2d(X1[:,:,kd], dCs1, mode='valid')
+                    dB1[km] = -LR *np.sum(np.sum(dCs1))
+                ###
+                dE0p = 0 * X1
+                for kd in range(cnn_D1):
+                    aq0 = 0 * dE0p[:,:,1]
+                    for km in range(cnn_M1):
+                        aq0 = aq0 + convolve2d(dC1[:,:,km],W1[:,:,kd,km], mode='full')
+                    dE0p[:,:,kd] = aq0
+
+                
+                dE0 = dE0p
+                
+                dF0 = np.sign(Y0)
+                dC0 = dE0 * dF0
+
+                dW0  = 0 * W0
+                dB0  = 0 * B0
+
+                for km in range(cnn_M0):
+                    #--------------------------------------------------#
+                    dCs0 = np.zeros((20,20))                           #
+                    for q1 in range(1 ,20):                            #
+                        for q2 in range(1 ,20):                        #
+                            dCs0[q1,q2] = dC0[20-q1+1, 20-q2+1, km]    #
+                    #--------------------------------------------------#
+                    for kd in range(cnn_D0):
+                        dW0[:,:,kd,km] = -LR * convolve2d(X0[:,:,kd], dCs0, mode='valid')
+                    dB0[km] = -LR * np.sum(np.sum(dCs0))
+                
+                if math.isnan(dW0):
+                    print('Nan')
+                    break
+
+                if math.isnan(dW1):
+                    print('Nan')
+                    break
+
+                if math.isnan(dW2):
+                    print('Nan')
+                    break
+                
+                if math.isnan(dW3):
+                    print('Nan')
+                    break
+
+                if math.isnan(dW4):
+                    print('Nan')
+                    break
+
+                if math.isnan(dW5):
+                    print('Nan')
+                    break
+
+                W5 = W5 + dW5
+                B5 = B5 + dB5
+
+                W4 = W4 + dW4
+                B4 = B4 + dB4
+
+                W3 = W3 + dW3
+                B3 = B3 + dB3
+
+                W2 = W2 + dW2
+                B2 = B2 + dB2
+
+                W1 = W1 + dW1
+                B1 = B1 + dB1
+
+                W0 = W0 + dW0
+                B0 = B0 + dB0
+      
     else:
         print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
