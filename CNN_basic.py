@@ -60,35 +60,35 @@ sobre_train = 0;    #Flag to train the CNN from the actual kernels and
 #                               V
 #                       [Output: 10x1 size]
 
-if test_set==0:
-    if sobre_train==0:
+if test_set == 0 :
+    if sobre_train == 0 :
         cnn_D0, cnn_M0 = 1, 10
         cnn_D1, cnn_M1 = cnn_M0, 10
         cnn_D2, cnn_M2 = cnn_M1, 10
         
-        X0, Y0, W0, B0, R0    = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 0, 1) #ok<*ASGLU>
-        X1, Y1, W1, B1, R1    = CNN.layer_CNN(1, cnn_D1, cnn_M1, 20, 5, 2, 1)
-        X2, Y2, W2, B2, R2    = CNN.layer_CNN(1, cnn_D2, cnn_M2, 16, 3, 2, 1)
+        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 0, 1) #ok<*ASGLU>
+        X1, Y1, W1, B1 = CNN.layer_CNN(1, cnn_D1, cnn_M1, 20, 5, 2, 1)
+        X2, Y2, W2, B2 = CNN.layer_CNN(1, cnn_D2, cnn_M2, 16, 3, 2, 1)
         
-        X3, Y3, W3, B3       = FCC.layer_FCC(1960, 100, 1)
-        X4, Y4, W4, B4       = FCC.layer_FCC(100, 100, 1)
-        X5, Y5, W5, B5       = FCC.layer_FCC(100, 10, 1)
+        X3, Y3, W3, B3 = FCC.layer_FCC(1960, 100, 1)
+        X4, Y4, W4, B4 = FCC.layer_FCC(100, 100, 1)
+        X5, Y5, W5, B5 = FCC.layer_FCC(100, 10, 1)
 
 #Storage variables
-Z1 = np.zeros(28,28,1)    # Variable used for display the input image in 
+Z1 = np.zeros((28,28,1))    # Variable used for display the input image in 
                             # the training of the CNN
-if test_set==0:
+if test_set == 0 :
     # Iterations for training the CNN
     iteraciones = 500e3
 else:
     # Iterations for test after the training the CNN
     iteraciones = 5e3
 
-E          = np.zeros(iteraciones,1);  # Loss function of the training set
-Etest      = np.zeros(iteraciones,1);  # Loss function of the test set 
-yCNN       = np.zeros(10,iteraciones);  # Output of the CNN 
-yDPN       = np.zeros(10,iteraciones);  # Desired output 
-sourc      = np.zeros(iteraciones,2);  # Input image source
+E          = np.zeros((iteraciones,1));  # Loss function of the training set
+Etest      = np.zeros((iteraciones,1));  # Loss function of the test set 
+yCNN       = np.zeros((10,iteraciones));  # Output of the CNN 
+yDPN       = np.zeros((10,iteraciones));  # Desired output 
+sourc      = np.zeros((iteraciones,2));  # Input image source
 
 #Training of the CNN
 for K in range(iteraciones):
@@ -97,7 +97,7 @@ for K in range(iteraciones):
     try_nan = 0;            #Flag to avoid not a number (NaN) values
     
     # Obtain the input image from the training set by random selection
-    while try_nan<1:
+    while try_nan < 1 :
         #sp  = floor(rand(1,1)*(10e3-1))+1
         sp = int(random.random() * (10**4 - 1)) + 1 #Variente de la funcion floor
         X0 = dataset["Amnist"][:, :, sp]
@@ -110,8 +110,8 @@ for K in range(iteraciones):
         YD[yd] = 1
         #YD = FCC.switch(yd)
 
-        if np.isnan(X0)==0:
-            try_nan=1
+        if np.isnan(X0) == 0 :
+            try_nan = 1
         else:
             keep1 = sp
 
@@ -124,9 +124,11 @@ for K in range(iteraciones):
         # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
         yd  = dataset["label_B"][sp_test]
+
         YD_test = [0,0,0,0,0,0,0,0,0,0]
         YD_test[yd] = 1
-        if np.isnan(X0_test)==0:
+
+        if np.isnan(X0_test) == 0:
             try_nan=1
         else:
             keep1 = sp_test
