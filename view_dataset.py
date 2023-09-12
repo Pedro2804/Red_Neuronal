@@ -1,5 +1,8 @@
 from scipy.io import loadmat
+import matplotlib.pyplot as plt
 import numpy as np
+from scipy import signal
+import full_conv as fc
 
 def cargar_archivos():
     Amnist = loadmat('Archivos_buap/Amnist.mat')
@@ -15,11 +18,11 @@ def cargar_archivos():
     x = 0
     for i in range(10):
         b = int(a + index_A["index_A"][i][0])
-        label_A[a, b+1] = x
+        label_A[a:b+1][0] = x
         x += 1
         a = b
         
-    return {"Amnist": Amnist, "label_A": label_A, "Bmnist": Bmnist_V2, "label_B": index_B_V2}
+    return {"Amnist": Amnist["Amnist"], "label_A": label_A, "Bmnist": Bmnist_V2, "label_B": index_B_V2}
 
 '''
 a = 0
@@ -30,7 +33,13 @@ for i in range(10):
     print()
     a = d
 '''
+data = cargar_archivos()
 
-#plt.imshow(data["Amnist"][:, :, 980], cmap='gray')  # cmap='gray' para mostrar la imagen en escala de grises
-#plt.axis('off')  # Para ocultar los ejes
-#plt.show()
+plt.imshow(data["Amnist"][:, :, 980], cmap='gray')  # cmap='gray' para mostrar la imagen en escala de grises
+
+one = np.ones((10,10))
+conv = fc.full_conv(data["Amnist"][:, :, 980], (1/100)*one)
+plt.imshow(conv, cmap='gray')
+
+plt.axis('off')  # Para ocultar los ejes
+plt.show()
