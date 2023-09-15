@@ -3,8 +3,8 @@ import layer_CNN as CNN
 import layer_FCC as FCC
 import numpy as np
 import random
-import tensorflow as tf
 from scipy import signal
+import matplotlib.pyplot as plt
 
 dataset = vds.cargar_archivos()
 
@@ -179,128 +179,113 @@ for K in range(iteraciones):
                     am2[q1][q2] = W2[2-q1][2-q2][kd][km]#
             #-----------------------------------------------#
             sm2 += signal.convolve2d(X2[:, :, kd], am2, 'valid')
-        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+        Y2[:, :, km] = np.maximum(sm2 + B2[km], 0)
     X3 = np.reshape(Y2,(Y2.size, 1))
 
+    Y3 = W3 * X3
+    #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
+    Y3 = np.maximum(Y3 + 1. * B3, 0)
+    
+    X4  = Y3
+    Y4 = W4 * X4
+    Y3 = np.maximum(Y4 + 1. * B4, 0)
 
-    # Verifica si una GPU está disponible
-    if tf.config.list_physical_devices('GPU'):
-        # Mueve las matrices a la GPU y las multiplica
-        with tf.device("/GPU:0"):
-            X3g = tf.constant(X3, dtype=tf.float32)
-            W3g = tf.constant(W3, dtype=tf.float32)
-            Y3g = tf.matmul(W3g, X3g)
-            #Transfiere de GPU a CPU
-            Y3 = Y3g.numpy
-            #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+    X5  = Y4
+    Y5 = W5 * X5
 
-            X4  = Y3
-            # Mueve las matrices a la GPU y las multiplica
-            X4g = tf.constant(X4, dtype=tf.float32)
-            W4g = tf.constant(W4, dtype=tf.float32)
-            Y4g = tf.matmul(W4g, X4g)
-            #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
-            #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+    #Error cuadrático medio
+    Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
 
-            X5  = Y4
-            # Mueve las matrices a la GPU y las multiplica
-            X5g = tf.constant(X5, dtype=tf.float32)
-            W5g = tf.constant(W5, dtype=tf.float32)
-            Y5g = tf.matmul(W5g, X5g)
-            #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+    ###########################################################
+    #                     Test run of the CNN
+    for km in range(cnn_M0):
+        sm1 = np.zeros_like(Y0[:, :, 0])
+        for kd in range(cnn_D0):
+            #-----------------------------------------------#
+            am1 = np.zeros((9, 9))
+            for q1 in range(9):
+                for q2 in range(9):
+                    am1[q1][q2] = W0[8 - q1][ 8 - q2][kd][km]
+            #-----------------------------------------------#
+            sm1 += signal.convolve2d(X0[:, :, kd], am1, 'valid')
+        Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
+        X1[:, :, km] = Y0[:, :, km]
 
-            #Funcion Softmax
-            Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
-            #Error cuadrático medio
-            Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
+    for km in range(cnn_M1):
+        sm1 = np.zeros_like(Y1[:, :, 0])
+        for kd in range(cnn_D1):
+            #-----------------------------------------------#
+            am1 = np.zeros((5,5));                          #
+            for q1 in range(5):                             #
+                for q2 in range(5):                         #
+                    am1[q1][q2] = W1[4-q1][4-q2][kd][km] #
+            #-----------------------------------------------#
+            sm1 += signal.convolve2d(X1[:,:,kd],am1, 'valid')
+        Y1[:,:,km] = np.maximum(sm1 + B1[km],0)
+        X2[:, :, km] = Y1[:, :, km]
+        # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
 
+    for km in range(cnn_M2):
+        sm2 = np.zeros_like(Y2[:, :, 0])
+        for kd in range(cnn_D2):
+            #-----------------------------------------------#
+            am2 = np.zeros((3,3));                          #
+            for q1 in range(3):                             #
+                for q2 in range(3):                         #
+                    am2[q1][q2] = W2[2-q1][2-q2][kd][km]#
+            #-----------------------------------------------#
+            sm2 += signal.convolve2d(X2[:, :, kd],am2, 'valid')
+        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
 
-            ###########################################################
-            #                     Test run of the CNN
-            for km in range(cnn_M0):
-                sm1 = np.zeros_like(Y0[:, :, 0])
-                for kd in range(cnn_D0):
-                    #-----------------------------------------------#
-                    am1 = np.zeros((9, 9))
-                    for q1 in range(9):
-                        for q2 in range(9):
-                            am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
-                    #-----------------------------------------------#
-                    sm1 += signal.convolve2d(X0[:, :, kd], am1, 'valid')
-                Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
-                X1[:, :, km] = Y0[:, :, km]
+    X3 = np.reshape(Y2, (Y2.size, 1))
 
-            for km in range(cnn_M1):
-                sm1 = np.zeros_like(Y1[:, :, 0])
-                for kd in range(cnn_D1):
-                    #-----------------------------------------------#
-                    am1 = np.zeros((5,5));                          #
-                    for q1 in range(5):                             #
-                        for q2 in range(5):                         #
-                            am1[q1][q2] = W1[4-q1][4-q2][kd,km] #
-                    #-----------------------------------------------#
-                    sm1 += signal.convolve2d(X1[:,:,kd],am1, 'valid')
-                Y1[:,:,km] = np.maximum(sm1 + B1(km),0)
-                X2[:, :, km] = Y1[:, :, km]
-                # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
+    Y3 = W3 * X3
+    Y3 = np.maximum(Y3 + 1. * B3, 0)
 
-            for km in range(cnn_M2):
-                sm2 = np.zeros_like(Y2[:, :, 0])
-                for kd in range(cnn_D2):
-                    #-----------------------------------------------#
-                    am2 = np.zeros((3,3));                          #
-                    for q1 in range(3):                             #
-                        for q2 in range(3):                         #
-                            am2[q1][q2] = W2[2-q1][2-q2][kd][km]#
-                    #-----------------------------------------------#
-                    sm2 += signal.convolve2d(X2[:, :, kd],am2, 'valid')
-                Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+    X4  = Y3
+    Y4 = W4 * X4
+    Y3 = np.maximum(Y4 + 1. * B4, 0)
 
-            X3 = np.reshape(Y2, (Y2.size, 1))
+    X5  = Y4
+    Y5 = W5 * X5
 
-            # Mueve las matrices a la GPU y las multiplica
-            X3g = tf.constant(X3, dtype=tf.float32)
-            W3g = tf.constant(W3, dtype=tf.float32)
-            Y3g = tf.matmul(W3g, X3g)
-            #Tranfiere de GPU a CPU
-            Y3 = Y3g.numpy
-            #Función RELU
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+    Y5_past = Y5
+    #Funcion Softmax
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
 
-            X4  = Y3
-            # Mueve las matrices a la GPU y las multiplica
-            X4g = tf.constant(X4, dtype=tf.float32)
-            W4g = tf.constant(W4, dtype=tf.float32)
-            Y4g = tf.matmul(W4g, X4g)
-            #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
-            #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+    YD_neg = YD
+    Y5_neg = Y5
 
-            X5  = Y4
-            # Mueve las matrices a la GPU y las multiplica
-            X5g = tf.constant(X5, dtype=tf.float32)
-            W5g = tf.constant(W5, dtype=tf.float32)
-            Y5g = tf.matmul(W5g, X5g)
-            #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+    E[K] = 0.5*np.mean((YD-Y5)**2 )
+    yCNN[:][K] = Y5
+    yDPN[:][K] = YD
 
-            Y5_past = Y5
-            #Funcion Softmax
-            Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+    if (K-1 % 1e3) == 999:
+        Q1 = E[K-999:K]
+        Q2 = Etest[K-999:K]
 
-            YD_neg = YD
-            Y5_neg = Y5
+        # Crear la primera subtrama
+        plt.subplot(1, 2, 1)
 
-            E[K] = 0.5*np.mean((YD-Y5)**2 ) #Linea 338
-            #E(K) = 0.5*mean( (YD-Y5).^2 );
-            #yCNN(:,K) = Y5;
-            #yDPN(:,K) = YD;
+        # Calcular las medias de Q1 y Q2
+        mean_Q1 = np.mean(Q1, axis=0)
+        mean_Q2 = np.mean(Q2, axis=0)
 
+        # Crear el gráfico semilogarítmico con el valor de K en el eje x
+        K = 123  # Reemplaza 123 con el valor entero de K que desees
+        plt.semilogy([K], mean_Q1, 'b.', label='Q1')
+        plt.semilogy([K], mean_Q2, 'r.', label='Q2')
 
-    else:
-        print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
+        # Etiquetas de los ejes y leyenda
+        plt.xlabel('K')
+        plt.ylabel('Mean')
+        plt.legend()
+
+        axf = np.argmax(Y5_neg) - 1
+
+        mxmp = np.zeros(10)
+        mxmp[axf] = 1 # Línea 362
+
+        # Mostrar el gráfico
+        plt.show()
