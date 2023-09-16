@@ -1,10 +1,12 @@
 import view_dataset as vds
 import layer_CNN as CNN
 import layer_FCC as FCC
+import full_conv as fc
 import numpy as np
 import random
 import tensorflow as tf
 from scipy import signal
+import matplotlib.pyplot as plt
 
 dataset = vds.cargar_archivos()
 
@@ -108,6 +110,7 @@ for K in range(iteraciones):
 
         # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
         YD = [0,0,0,0,0,0,0,0,0,0]
+        YD = YD.T #Se supone que es para transponer una matriz o vector
         YD[yd] = 1
         #YD = FCC.switch(yd)
 
@@ -127,6 +130,7 @@ for K in range(iteraciones):
         yd  = dataset["label_B"][sp_test]
 
         YD_test = [0,0,0,0,0,0,0,0,0,0]
+        YD_test = YD_test.T #Se supone que es para transponer una matriz o vector
         YD_test[yd] = 1
 
         if np.isnan(X0_test) == 0:
@@ -298,9 +302,197 @@ for K in range(iteraciones):
 
             E[K] = 0.5*np.mean((YD-Y5)**2 ) #Linea 338
             #E(K) = 0.5*mean( (YD-Y5).^2 );
-            #yCNN(:,K) = Y5;
-            #yDPN(:,K) = YD;
+            yCNN[:,K] = Y5
+            yDPN[:,K] = YD
 
+#----------------------------------------------DESDE AQUI EMPECE-----------------------------------------------##########
+        # Visualization of the training process
+        if ((K-1)%(10**3) == 999):
+            Q1 = E[K-999:K]
+            Q2 = Etest[K-999:K]
+            #subplot(1,2,1)
+            # Crear una figura y ejes (subgráficos)
+            plt.subplot(1, 2, 1)
+
+            #semilogy(K,mean(Q1),'b.',K,mean(Q2),'r.')#,K,Last_error,'r.')
+            plt.semilogy(K,np.mean(Q1),'b.',K,np.mean(Q2),'r.')
+            # [YD_neg,Y5_neg,abs(YD_neg-Y5_neg)]
+
+            #axf = find(Y5_neg==max(Y5_neg)) - 1
+            axf = np.nonzero(Y5_neg==max(Y5_neg)) - 1
+
+            mxmp = [0,0,0,0,0,0,0,0,0,0]
+            mxmp = mxmp.T
+            mxmp[axf] = 1
+
+            print(YD_neg,mxmp,abs(YD_neg-mxmp))##ok
+            LR                          # Display the dots of the loss 
+                                        # function, the desired value and 
+                                        # CNN value of the iteration and 
+                                        # the learning rate
+            
+            """hold on
+            subplot(1,2,2)
+            imshow(X0.*0.5)
+            pause(1e-20)"""
+            # Subgráfico 2
+            plt.subplot(1, 2, 2)
+            plt.imshow(X0 * 0.5)
+            plt.pause(1/10**19)
+
+            plt.show()
+
+            # Back propagation error
+        if test_set ==  0:
+            dE5 = (Y5-YD)*MT
+            dF5 = c1*Y5*(1-Y5)
+
+            dC5 = dE5*dF5
+            dC5g= gpuArray(dC5)
+            dW5 = -LR*X5.T*dC5
+            dB5 = -LR*dC5
+            ###
+            dE4g = pagefun(@mtimes,W5g.T,dC5g)
+            dE4  = gather(dE4g)
+            dF4 = sign(Y4)
+            dC4 = dE4*dF4
+
+            dC4g= gpuArray(dC4)
+
+            dW4g= pagefun(@mtimes,dC4g,X4g.T)
+            dW4 = gather(dW4g)
+            dW4 = bsxfun(@times,-LR,dW4)
+            dB4 = bsxfun(@times,-LR,dC4)   
+            ###
+            dE3g = pagefun(@mtimes,W4g.T,dC4g)
+            dE3  = gather(dE3g)
+            dF3 = sign(Y3)
+            dC3 = dE3.*dF3
+
+            dC3g= gpuArray(dC3)
+
+            dW3g= pagefun(@mtimes,dC3g,X3g.T)
+            dW3 = gather(dW3g)
+            dW3 = bsxfun(@times,-LR,dW3)
+            dB3 = bsxfun(@times,-LR,dC3)   
+            ###
+            dE2fg = pagefun(@mtimes,W3g.T,dC3g)
+            dE2f  = gather(dE2fg)
+
+            dE2  = reshape(dE2f,14,14,10)
+            dF2  = sign(Y2)
+            dC2  = dE2*dF2
+
+            dW2  = 0*W2
+            dB2  = 0*B2
+
+            for km in range(cnn_M2):
+                #-----------------------------------------------#
+                dCs2 = np.zeros((14,14));                       #
+                for q1 in range(14):                            #
+                    for q2 in range(14):                        #
+                        dCs2[q1][q2] = dC2[14-q1+1][14-q2+1][km]#
+                #-----------------------------------------------#
+                for kd in range(cnn_D2):
+                    dW2[:,:,kd][km] = -LR*signal.convolve2(X2[:,:,kd],dCs2,'valid')
+
+                dB2[km] = -LR*np.sum(np.sum(dCs2))
+            
+            ###
+            dE1p = 0*X2
+            for kd in range(cnn_D2):
+                aq1 = 0*dE1p[:,:,1]
+                for km in range(cnn_M2):
+                    aq1 = aq1 + fc.full_conv(dC2[:,:,km],W2[:,:,kd][km]) #AQUI SE UTILIZA LA FUNCION DE full_conv.php
+                dE1p[:,:,kd] = aq1
+
+            dE1 = dE1p
+
+            dF1 = sign(Y1)
+            dC1 = dE1*dF1
+
+            dW1  = 0*W1
+            dB1  = 0*B1
+
+            for km in range(cnn_M1):
+                #-----------------------------------------------#
+                dCs1 = np.zeros((16,16))                        #
+                for q1 in range(16):                            #
+                    for q2 in range(16):                        #
+                        dCs1[q1][q2] = dC1[16-q1+1][16-q2+1][km]#
+                #-----------------------------------------------#
+                for kd in range(cnn_D1):
+                    dW1[:,:,kd][km] = -LR*signal.convolve2(X1[:,:,kd],dCs1,'valid')
+                
+                dB1[km] = -LR*np.sum(np.sum(dCs1))
+            ###
+            dE0p = 0*X1
+            for kd in range(cnn_D1):
+                aq0 = 0*dE0p[:,:,1]
+                for km in range(cnn_M1):
+                    aq0 = aq0 + fc.full_conv(dC1[:,:,km],W1[:,:,kd][km])
+                dE0p[:,:,kd] = aq0
+
+            dE0 = dE0p
+
+            dF0 = sign(Y0)
+            dC0 = dE0*dF0
+
+            dW0  = 0*W0
+            dB0  = 0*B0
+
+            for km in range(cnn_M0):
+                #-----------------------------------------------#
+                dCs0 = np.zeros((20,20))                        #
+                for q1 in range(20):                            #
+                    for q2 in range(20):                        #
+                        dCs0[q1][q2] = dC0[20-q1+1][20-q2+1][km]#
+                #-----------------------------------------------#
+                for kd in range(cnn_D0):
+                    dW0[:,:,kd][km] = -LR*signal.convolve2(X0[:,:,kd],dCs0,'valid')
+                dB0[km] = -LR*np.sum(np.sum(dCs0))
+            
+            if np.isnan(dW0)==1:
+                disp('NaN')
+                break
+            
+            if np.isnan(dW1)==1:
+                disp('NaN')
+                break
+            
+            if np.isnan(dW2)==1:
+                disp('NaN')
+                break
+            
+            if np.isnan(dW3)==1:
+                disp('NaN')
+                break
+            
+            if np.isnan(dW4)==1:
+                disp('NaN')
+                break
+            
+            if np.isnan(dW5)==1:
+                disp('NaN')
+                break
+            
+            W5 = W5 + dW5
+            B5 = B5 + dB5
+
+            W4 = W4 + dW4
+            B4 = B4 + dB4
+
+            W3 = W3 + dW3
+            B3 = B3 + dB3
+
+            W2 = W2 + dW2
+            B2 = B2 + dB2
+
+            W1 = W1 + dW1
+            B1 = B1 + dB1
+
+            W0 = W0 + dW0
+            B0 = B0 + dB0
 
     else:
         print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
