@@ -122,10 +122,10 @@ Z1 = np.zeros((28,28,1))    # Variable used for display the input image in
                             # the training of the CNN
 if test_set == 0 :
     # Iterations for training the CNN
-    iteraciones = 500e3
+    iteraciones = int(500e3)
 else:
     # Iterations for test after the training the CNN
-    iteraciones = 5e3
+    iteraciones = int(5e3)
 
 E          = np.zeros((iteraciones,1));  # Loss function of the training set
 Etest      = np.zeros((iteraciones,1));  # Loss function of the test set 
@@ -152,11 +152,6 @@ for K in range(iteraciones):
         YD = np.zeros(10, dtype=int)
         YD[yd] = 1
         #YD = FCC.switch(yd)
-
-        if np.isnan(X0) == 0 :
-            try_nan = 1
-        else:
-            keep1 = sp
 
     try_nan = 0
     # Obtain the input image from the test set by random selection
