@@ -117,6 +117,22 @@ plt.legend()
 
 plt.show()
 
+BIN = 5
+
+pesos = [W0, W1, W2, W3,W4,W5]
+titulo_histograma = ['Histograma w0', 'Histograma w1', 'Histograma w2', 'Histograma w3','Histograma w4','Histograma w5']
+for i, W in enumerate(pesos):
+    fW = W.flatten()
+    histW, binsW = np.histogram(fW, BIN)
+    plt.figure()
+    plt.hist(fW, BIN, edgecolor='k')
+    plt.xlabel('valor')
+    plt.ylabel('Frecuencia')
+    plt.title(titulo_histograma[i])
+    plt.legend()
+
+plt.show()
+
 
 #Storage variables
 Z1 = np.zeros((28,28,1))    # Variable used for display the input image in 
