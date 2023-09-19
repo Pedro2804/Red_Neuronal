@@ -1,24 +1,22 @@
 import view_dataset as vds
 import layer_CNN as CNN
 import layer_FCC as FCC
-import full_conv as fc
 import numpy as np
 import random
-import tensorflow as tf
 from scipy import signal
 import matplotlib.pyplot as plt
 
 dataset = vds.cargar_archivos()
 
 #Variable initialization
-LR	= 10e-3;        #Initial learning rate
-MT	= 100;          #Loss function modifier for backpropagation algorithm
+LR	= 10e-3        #Initial learning rate
+MT	= 100          #Loss function modifier for backpropagation algorithm
 # c1	= 1.4e-4;       #Constant for adjusting the output layer of the CNN
-c1	= 1e-5; 
+c1	= 1e-5 
 
-test_set    = 0;    #Flag to select between training the CNN or only test 
+test_set    = 0    #Flag to select between training the CNN or only test 
                     #the CNN
-sobre_train = 0;    #Flag to train the CNN from the actual kernels and 
+sobre_train = 0    #Flag to train the CNN from the actual kernels and 
                     #synaptic weights instead from random values
 
 #Define the architecture of the CNN
@@ -69,7 +67,7 @@ if test_set == 0 :
         cnn_D1, cnn_M1 = cnn_M0, 10
         cnn_D2, cnn_M2 = cnn_M1, 10
         
-        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 1) #ok<*ASGLU>
+        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 1)
         X1, Y1, W1, B1 = CNN.layer_CNN(1, cnn_D1, cnn_M1, 20, 5, 1)
         X2, Y2, W2, B2 = CNN.layer_CNN(1, cnn_D2, cnn_M2, 16, 3, 1)
         
@@ -109,8 +107,7 @@ for K in range(iteraciones):
         yd  = dataset["label_A"][sp]
 
         # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
-        YD = [0,0,0,0,0,0,0,0,0,0]
-        YD = YD.T #Se supone que es para transponer una matriz o vector
+        YD = np.zeros(10, dtype=int)
         YD[yd] = 1
         #YD = FCC.switch(yd)
 
@@ -129,8 +126,7 @@ for K in range(iteraciones):
 
         yd  = dataset["label_B"][sp_test]
 
-        YD_test = [0,0,0,0,0,0,0,0,0,0]
-        YD_test = YD_test.T #Se supone que es para transponer una matriz o vector
+        YD_test = np.zeros(10, dtype=int)
         YD_test[yd] = 1
 
         if np.isnan(X0_test) == 0:
@@ -138,8 +134,8 @@ for K in range(iteraciones):
         else:
             keep1 = sp_test
 
-    sourc[K][1] = sp
-    sourc[K][2] = sp_test
+    sourc[K, 1] = sp
+    sourc[K, 2] = sp_test
 
     #######################################################################
     #                         Test run of the CNN
@@ -151,7 +147,7 @@ for K in range(iteraciones):
             am1 = np.zeros((9,9))                           #
             for q1 in range(9):                             #
                 for q2 in range(9):                         #
-                    am1[q1][q2] = W0[8-q1][8-q2][kd][km]#
+                    am1[q1, q2] = W0[8-q1, 8-q2, kd, km]#
             #-----------------------------------------------#
             sm1 += signal.convolve2d(X0_test[:, :, kd], am1, 'valid')
 
@@ -166,7 +162,7 @@ for K in range(iteraciones):
             am1 = np.zeros((5,5))                          #
             for q1 in range(5):                             #
                 for q2 in range(5):                         #
-                    am1[q1][q2] = W1[4-q1][4-q2][kd][km]#
+                    am1[q1, q2] = W1[4-q1, 4-q2, kd, km]#
             #-----------------------------------------------#
             sm1 += signal.convolve2d(X1[:, :, kd], am1, 'valid')
         Y1[:, :, km] = np.maximum(sm1 + B1[km],0)
@@ -180,130 +176,256 @@ for K in range(iteraciones):
             am2 = np.zeros((3,3))                           #
             for q1 in range(3):                             #
                 for q2 in range(3):                         #
-                    am2[q1][q2] = W2[2-q1][2-q2][kd][km]#
+                    am2[q1, q2] = W2[2-q1, 2-q2, kd, km]#
             #-----------------------------------------------#
             sm2 += signal.convolve2d(X2[:, :, kd], am2, 'valid')
-        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+        Y2[:, :, km] = np.maximum(sm2 + B2[km], 0)
     X3 = np.reshape(Y2,(Y2.size, 1))
 
+    Y3 = W3 @ X3
+    #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
+    Y3 = np.maximum(Y3 + 1. * B3, 0)
+    
+    X4  = Y3
+    Y4 = W4 @ X4
+    Y3 = np.maximum(Y4 + 1. * B4, 0)
 
-    # Verifica si una GPU está disponible
-    if tf.config.list_physical_devices('GPU'):
-        # Mueve las matrices a la GPU y las multiplica
-        with tf.device("/GPU:0"):
-            X3g = tf.constant(X3, dtype=tf.float32)
-            W3g = tf.constant(W3, dtype=tf.float32)
-            Y3g = tf.matmul(W3g, X3g)
-            #Transfiere de GPU a CPU
-            Y3 = Y3g.numpy
-            #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+    X5  = Y4
+    Y5 = W5 @ X5
 
-            X4  = Y3
-            # Mueve las matrices a la GPU y las multiplica
-            X4g = tf.constant(X4, dtype=tf.float32)
-            W4g = tf.constant(W4, dtype=tf.float32)
-            Y4g = tf.matmul(W4g, X4g)
-            #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
-            #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+    #Error cuadrático medio
+    Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
 
-            X5  = Y4
-            # Mueve las matrices a la GPU y las multiplica
-            X5g = tf.constant(X5, dtype=tf.float32)
-            W5g = tf.constant(W5, dtype=tf.float32)
-            Y5g = tf.matmul(W5g, X5g)
-            #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+    ###########################################################
+    #                     Test run of the CNN
+    for km in range(cnn_M0):
+        sm1 = np.zeros_like(Y0[:, :, 0])
+        for kd in range(cnn_D0):
+            #-----------------------------------------------#
+            am1 = np.zeros((9, 9))
+            for q1 in range(9):
+                for q2 in range(9):
+                    am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
+            #-----------------------------------------------#
+            sm1 += signal.convolve2d(X0[:, :, kd], am1, 'valid')
+        Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
+        X1[:, :, km] = Y0[:, :, km]
 
-            #Funcion Softmax
-            Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
-            #Error cuadrático medio
-            Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
+    for km in range(cnn_M1):
+        sm1 = np.zeros_like(Y1[:, :, 0])
+        for kd in range(cnn_D1):
+            #-----------------------------------------------#
+            am1 = np.zeros((5,5));                          #
+            for q1 in range(5):                             #
+                for q2 in range(5):                         #
+                    am1[q1, q2] = W1[4-q1, 4-q2, kd, km] #
+            #-----------------------------------------------#
+            sm1 += signal.convolve2d(X1[:,:,kd],am1, 'valid')
+        Y1[:,:,km] = np.maximum(sm1 + B1[km],0)
+        X2[:, :, km] = Y1[:, :, km]
+        # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
 
+    for km in range(cnn_M2):
+        sm2 = np.zeros_like(Y2[:, :, 0])
+        for kd in range(cnn_D2):
+            #-----------------------------------------------#
+            am2 = np.zeros((3,3));                          #
+            for q1 in range(3):                             #
+                for q2 in range(3):                         #
+                    am2[q1, q2] = W2[2-q1, 2-q2, kd, km]#
+            #-----------------------------------------------#
+            sm2 += signal.convolve2d(X2[:, :, kd],am2, 'valid')
+        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
 
-            ###########################################################
-            #                     Test run of the CNN
-            for km in range(cnn_M0):
-                sm1 = np.zeros_like(Y0[:, :, 0])
-                for kd in range(cnn_D0):
-                    #-----------------------------------------------#
-                    am1 = np.zeros((9, 9))
-                    for q1 in range(9):
-                        for q2 in range(9):
-                            am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
-                    #-----------------------------------------------#
-                    sm1 += signal.convolve2d(X0[:, :, kd], am1, 'valid')
-                Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
-                X1[:, :, km] = Y0[:, :, km]
+    X3 = np.reshape(Y2, (Y2.size, 1))
 
-            for km in range(cnn_M1):
-                sm1 = np.zeros_like(Y1[:, :, 0])
-                for kd in range(cnn_D1):
-                    #-----------------------------------------------#
-                    am1 = np.zeros((5,5));                          #
-                    for q1 in range(5):                             #
-                        for q2 in range(5):                         #
-                            am1[q1][q2] = W1[4-q1][4-q2][kd,km] #
-                    #-----------------------------------------------#
-                    sm1 += signal.convolve2d(X1[:,:,kd],am1, 'valid')
-                Y1[:,:,km] = np.maximum(sm1 + B1(km),0)
-                X2[:, :, km] = Y1[:, :, km]
-                # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
+    Y3 = W3 @ X3
+    Y3 = np.maximum(Y3 + 1. * B3, 0)
 
+    X4  = Y3
+    Y4 = W4 @ X4
+    Y3 = np.maximum(Y4 + 1. * B4, 0)
+
+    X5  = Y4
+    Y5 = W5 @ X5
+
+    Y5_past = Y5
+    #Funcion Softmax
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+
+    YD_neg = YD
+    Y5_neg = Y5
+
+    E[K] = 0.5*np.mean((YD-Y5)**2 )
+    yCNN[:,K] = Y5
+    yDPN[:,K] = YD
+
+    if (K-1 % 1e3) == 999:
+        Q1 = E[K-999:K]
+        Q2 = Etest[K-999:K]
+
+        # Crear la primera subtrama
+        plt.subplot(1, 2, 1)
+
+        # Calcular las medias de Q1 y Q2
+        mean_Q1 = np.mean(Q1, axis=0)
+        mean_Q2 = np.mean(Q2, axis=0)
+
+        # Crear el gráfico semilogarítmico con el valor de K en el eje x
+        K = 123  # Reemplaza 123 con el valor entero de K que desees
+        plt.semilogy([K], mean_Q1, 'b.', label='Q1')
+        plt.semilogy([K], mean_Q2, 'r.', label='Q2')
+
+        # Etiquetas de los ejes y leyenda
+        plt.xlabel('K')
+        plt.ylabel('Mean')
+        plt.legend()
+
+        axf = np.argmax(Y5_neg) - 1
+
+        mxmp = np.zeros(10)
+        mxmp[axf] = 1
+
+        """
+        ---------FALTA IMPLEMENTAR-----------
+        [YD_neg,mxmp,abs(YD_neg-mxmp)]%#ok
+        LR                          % Display the dots of the loss 
+                                    % function, the desired value and 
+                                    % CNN value of the iteration and 
+                                    % the learning rate
+        
+        hold on
+        subplot(1,2,2)
+        imshow(X0.*0.5);
+        pause(1e-20);
+        """
+
+        # Mostrar el gráfico
+        plt.show()
+    
+    # Back propagation error
+    if test_set == 0:
+        dE5 = (Y5 - YD) * MT
+        dF5 = c1 * Y5 * (1 - Y5)
+
+        dC5 = dE5 * dF5
+        dW5 = -LR * X5.T * dC5
+        dB5 = -LR * dC5
+
+        dE4 = W5.T @ dC5
+        dF4 = np.sign(Y4)
+        dC4 = dE4 * dF4
+
+        dW4 = dC4 @ X4.T
+        dW4 = -LR * dW4
+        dB4 = -LR * dC4
+
+        dE3 = W4.T @ dC4
+        dF3 = np.sign(Y3)
+        dC3 = dE3 * dF3
+
+        dW3 = dC3 @ X3.T
+        dW3 = -LR * dW3
+        dB3 = -LR * dC3
+
+        dE2f = W3.T @ dC3
+
+        dE2 = np.reshape(dE2f, (14, 14, 10))
+        dF2 = np.sign(Y2)
+        dC2 = dE2 * dF2
+
+        dW2 = np.zeros_like(W2)
+        dB2 = np.zeros_like(B2)
+
+        for km in range(cnn_M2):
+            dCs2 = np.zeros((14, 14), dtype=int)
+            
+            for q1 in range(14):
+                for q2 in range(14):
+                    dCs2[q1,q2] = dC2[13 - q1, 13 - q2, km]
+
+            for kd in range(cnn_D2):
+                dW2[:,:,kd,km] = -LR * signal.convolve2d(X2[:,:,kd], dCs2, 'valid')
+            
+            dB2[km] = -LR * np.sum(dCs2)
+
+        dE1p = np.zeros_like(X2)
+
+        for kd in range(cnn_D2):
+            aq1 = np.zeros_like(dE1p[:, :, 0])
+            
             for km in range(cnn_M2):
-                sm2 = np.zeros_like(Y2[:, :, 0])
-                for kd in range(cnn_D2):
-                    #-----------------------------------------------#
-                    am2 = np.zeros((3,3));                          #
-                    for q1 in range(3):                             #
-                        for q2 in range(3):                         #
-                            am2[q1][q2] = W2[2-q1][2-q2][kd][km]#
-                    #-----------------------------------------------#
-                    sm2 += signal.convolve2d(X2[:, :, kd],am2, 'valid')
-                Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+                aq1 += signal.convolve2d(dC2[:, :, km], W2[:, :, kd, km], 'valid')
+            
+            dE1p[:, :, kd] = aq1
 
-            X3 = np.reshape(Y2, (Y2.size, 1))
+        dE1 = dE1p
 
-            # Mueve las matrices a la GPU y las multiplica
-            X3g = tf.constant(X3, dtype=tf.float32)
-            W3g = tf.constant(W3, dtype=tf.float32)
-            Y3g = tf.matmul(W3g, X3g)
-            #Tranfiere de GPU a CPU
-            Y3 = Y3g.numpy
-            #Función RELU
-            Y3  = np.maximum(Y3 + 1. * B3, 0)
+        dF1 = np.sign(Y1)
+        dC1 = dE1 * dF1
 
-            X4  = Y3
-            # Mueve las matrices a la GPU y las multiplica
-            X4g = tf.constant(X4, dtype=tf.float32)
-            W4g = tf.constant(W4, dtype=tf.float32)
-            Y4g = tf.matmul(W4g, X4g)
-            #Tranfiere de GPU a CPU
-            Y4 = Y4g.numpy
-            #Función RELU
-            Y4  = np.maximum(Y4 + 1. * B4, 0)
+        dW1 = np.zeros_like(W1)
+        dB1 = np.zeros_like(B1)
 
-            X5  = Y4
-            # Mueve las matrices a la GPU y las multiplica
-            X5g = tf.constant(X5, dtype=tf.float32)
-            W5g = tf.constant(W5, dtype=tf.float32)
-            Y5g = tf.matmul(W5g, X5g)
-            #Tranfiere de GPU a CPU
-            Y5 = Y5g.numpy
+        for km in range(cnn_M1):
+            dCs1 = np.zeros((16, 16))
+            
+            for q1 in range(16):
+                for q2 in range(16):
+                    dCs1[q1, q2] = dC1[15 - q1, 15 - q2, km]
 
-            Y5_past = Y5
-            #Funcion Softmax
-            Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+            for kd in range(cnn_D1):
+                dW1[:, :, kd, km] = -LR * signal.convolve2d(X1[:, :, kd], dCs1, 'valid')
+            
+            dB1[km] = -LR * np.sum(dCs1)
+        
+        dE0p = np.zeros_like(X1)
 
-            YD_neg = YD
-            Y5_neg = Y5
+        for kd in range(cnn_D1):
+            aq0 = np.zeros_like(dE0p[:, :, 0])
+            
+            for km in range(cnn_M1):
+                aq0 += signal.convolve2d(dC1[:, :, km], W1[:, :, kd, km], 'valid')
+            
+            dE0p[:, :, kd] = aq0
 
-            E[K] = 0.5*np.mean((YD-Y5)**2 ) #Linea 338
-            #E(K) = 0.5*mean( (YD-Y5).^2 );
-            yCNN[:,K] = Y5
-            yDPN[:,K] = YD
+        dE0 = dE0p
 
-    else:
-        print("No se detectó una GPU disponible. Las matrices se mantienen en la CPU.")
+        dF0 = np.sign(Y0)
+        dC0 = dE0 * dF0
+
+        dW0 = np.zeros_like(W0)
+        dB0 = np.zeros_like(B0)
+
+        for km in range(cnn_M0):
+            dCs0 = np.zeros((20, 20))
+            
+            for q1 in range(20):
+                for q2 in range(20):
+                    dCs0[q1, q2] = dC0[19 - q1, 19 - q2, km]
+
+            for kd in range(cnn_D0):
+                dW0[:, :, kd, km] = -LR * signal.convolve2d(X0[:, :, kd], dCs0, 'valid')
+            
+            dB0[km] = -LR * np.sum(dCs0)
+
+        # if isnan's eliminados
+
+        W5 = W5 + dW5
+        B5 = B5 + dB5
+
+        W4 = W4 + dW4
+        B4 = B4 + dB4
+
+        W3 = W3 + dW3
+        B3 = B3 + dB3
+
+        W2 = W2 + dW2
+        B2 = B2 + dB2
+
+        W1 = W1 + dW1
+        B1 = B1 + dB1
+
+        W0 = W0 + dW0
+        B0 = B0 + dB0
