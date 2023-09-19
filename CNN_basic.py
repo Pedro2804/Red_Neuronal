@@ -91,15 +91,29 @@ print(f"Y5: {Y5.shape}")
 
 BIN = 5
 
-fW = W0.flatten()
+fW0 = W0.flatten()
 
-histW, binsW = np.histogram(fW, BIN)
-plt.hist(fW, BIN, edgecolor='k')
+histW, binsW = np.histogram(fW0, BIN)
 
+plt.figure()
+plt.hist(fW0, BIN, edgecolor='k')
 plt.xlabel('valor')
 plt.ylabel('Frecuencia')
 plt.title('Histograma')
 plt.legend()
+
+
+fW1 = W1.flatten()
+
+histW, binsW = np.histogram(fW1, BIN)
+
+plt.figure()
+plt.hist(fW1, BIN, edgecolor='k')
+plt.xlabel('valor')
+plt.ylabel('Frecuencia')
+plt.title('Histograma')
+plt.legend()
+
 plt.show()
 
 
