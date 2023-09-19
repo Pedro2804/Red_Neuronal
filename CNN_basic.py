@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 dataset = vds.cargar_archivos()
 
 #Variable initialization
-LR	= 10e-3;        #Initial learning rate
-MT	= 100;          #Loss function modifier for backpropagation algorithm
+LR	= 10e-3        #Initial learning rate
+MT	= 100          #Loss function modifier for backpropagation algorithm
 # c1	= 1.4e-4;       #Constant for adjusting the output layer of the CNN
-c1	= 1e-5; 
+c1	= 1e-5 
 
-test_set    = 0;    #Flag to select between training the CNN or only test 
+test_set    = 0    #Flag to select between training the CNN or only test 
                     #the CNN
-sobre_train = 0;    #Flag to train the CNN from the actual kernels and 
+sobre_train = 0    #Flag to train the CNN from the actual kernels and 
                     #synaptic weights instead from random values
 
 #Define the architecture of the CNN
@@ -67,7 +67,7 @@ if test_set == 0 :
         cnn_D1, cnn_M1 = cnn_M0, 10
         cnn_D2, cnn_M2 = cnn_M1, 10
         
-        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 1) #ok<*ASGLU>
+        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 1)
         X1, Y1, W1, B1 = CNN.layer_CNN(1, cnn_D1, cnn_M1, 20, 5, 1)
         X2, Y2, W2, B2 = CNN.layer_CNN(1, cnn_D2, cnn_M2, 16, 3, 1)
         
