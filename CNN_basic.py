@@ -67,13 +67,42 @@ if test_set == 0 :
         cnn_D1, cnn_M1 = cnn_M0, 10
         cnn_D2, cnn_M2 = cnn_M1, 10
         
-        X0, Y0, W0, B0 = CNN.layer_CNN(1, cnn_M0, cnn_D0, 28, 9, 1)
-        X1, Y1, W1, B1 = CNN.layer_CNN(1, cnn_D1, cnn_M1, 20, 5, 1)
-        X2, Y2, W2, B2 = CNN.layer_CNN(1, cnn_D2, cnn_M2, 16, 3, 1)
+        X0, Y0, W0, B0 = CNN.layer_cnn(1, cnn_M0, cnn_D0, 28, 9, 1)
+        X1, Y1, W1, B1 = CNN.layer_cnn(1, cnn_D1, cnn_M1, 20, 5, 1)
+        X2, Y2, W2, B2 = CNN.layer_cnn(1, cnn_D2, cnn_M2, 16, 3, 1)
         
-        X3, Y3, W3, B3 = FCC.layer_FCC(1960, 100, 1)
-        X4, Y4, W4, B4 = FCC.layer_FCC(100, 100, 1)
-        X5, Y5, W5, B5 = FCC.layer_FCC(100, 10, 1)
+        X3, Y3, W3, B3 = FCC.layer_fcc(1960, 100, 1)
+        X4, Y4, W4, B4 = FCC.layer_fcc(100, 100, 1)
+        X5, Y5, W5, B5 = FCC.layer_fcc(100, 10, 1)
+
+print(f"X0: {X0.shape}")
+print(f"X1: {X1.shape}")
+print(f"X2: {X2.shape}")
+print(f"X3: {X3.shape}")
+print(f"X4: {X4.shape}")
+print(f"X5: {X5.shape}")
+
+print(f"Y0: {Y0.shape}")
+print(f"Y1: {Y1.shape}")
+print(f"Y2: {Y2.shape}")
+print(f"Y3: {Y3.shape}")
+print(f"Y4: {Y4.shape}")
+print(f"Y5: {Y5.shape}")
+
+print(f"W0: {W0.shape}")
+print(f"W1: {W1.shape}")
+print(f"W2: {W2.shape}")
+print(f"W3: {W3.shape}")
+print(f"W4: {W4.shape}")
+print(f"W5: {W5.shape}")
+
+print(f"B0: {B0.shape}")
+print(f"B1: {B1.shape}")
+print(f"B2: {B2.shape}")
+print(f"B3: {B3.shape}")
+print(f"B4: {B4.shape}")
+print(f"B5: {B5.shape}")
+
 
 #Storage variables
 Z1 = np.zeros((28,28,1))    # Variable used for display the input image in 
