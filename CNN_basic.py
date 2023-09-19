@@ -5,6 +5,7 @@ import numpy as np
 import random
 from scipy import signal
 import matplotlib.pyplot as plt
+import math
 
 dataset = vds.cargar_archivos()
 
@@ -142,7 +143,7 @@ for K in range(iteraciones):
     # Obtain the input image from the training set by random selection
     while try_nan < 1 :
         #sp  = floor(rand(1,1)*(10e3-1))+1
-        sp = int(random.random() * (10**4 - 1)) + 1 #Variente de la funcion floor
+        sp = math.floor(random.random() * (10**4 - 1)) + 1 #Variente de la funcion floor
         X0 = dataset["Amnist"][:, :, sp]
         # YD = (1+exp(-ZP_lab(:,sp))).^-1   
 
@@ -157,7 +158,7 @@ for K in range(iteraciones):
     # Obtain the input image from the test set by random selection
     while try_nan < 1:
         #sp_test  = floor(rand(1,1)*(59999-1))+1;
-        sp_test = int(random.random() * (60000 - 1)) + 1
+        sp_test = math.floor(random.random() * (60000 - 1)) + 1
         X0_test  = dataset["Bmnist"][:, :, sp_test]
         # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
