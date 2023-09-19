@@ -89,19 +89,18 @@ print(f"Y3: {Y3.shape}")
 print(f"Y4: {Y4.shape}")
 print(f"Y5: {Y5.shape}")
 
-print(f"W0: {W0.shape}")
-print(f"W1: {W1.shape}")
-print(f"W2: {W2.shape}")
-print(f"W3: {W3.shape}")
-print(f"W4: {W4.shape}")
-print(f"W5: {W5.shape}")
+BIN = 5
 
-print(f"B0: {B0.shape}")
-print(f"B1: {B1.shape}")
-print(f"B2: {B2.shape}")
-print(f"B3: {B3.shape}")
-print(f"B4: {B4.shape}")
-print(f"B5: {B5.shape}")
+fW = W0.flatten()
+
+histW, binsW = np.histogram(fW, BIN)
+plt.hist(fW, BIN, edgecolor='k')
+
+plt.xlabel('valor')
+plt.ylabel('Frecuencia')
+plt.title('Histograma')
+plt.legend()
+plt.show()
 
 
 #Storage variables
