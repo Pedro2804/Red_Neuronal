@@ -91,34 +91,7 @@ print(f"Y4: {Y4.shape}")
 print(f"Y5: {Y5.shape}")
 
 BIN = 5
-
-fW0 = W0.flatten()
-
-histW, binsW = np.histogram(fW0, BIN)
-
-plt.figure()
-plt.hist(fW0, BIN, edgecolor='k')
-plt.xlabel('valor')
-plt.ylabel('Frecuencia')
-plt.title('Histograma')
-plt.legend()
-
-
-fW1 = W1.flatten()
-
-histW, binsW = np.histogram(fW1, BIN)
-
-plt.figure()
-plt.hist(fW1, BIN, edgecolor='k')
-plt.xlabel('valor')
-plt.ylabel('Frecuencia')
-plt.title('Histograma')
-plt.legend()
-
-plt.show()
-
-BIN = 5
-
+'''
 pesos = [W0, W1, W2, W3,W4,W5]
 titulo_histograma = ['Histograma w0', 'Histograma w1', 'Histograma w2', 'Histograma w3','Histograma w4','Histograma w5']
 for i, W in enumerate(pesos):
@@ -132,7 +105,7 @@ for i, W in enumerate(pesos):
     plt.legend()
 
 plt.show()
-
+'''
 
 #Storage variables
 Z1 = np.zeros((28,28,1))    # Variable used for display the input image in 
@@ -150,52 +123,56 @@ yCNN       = np.zeros((10,iteraciones));  # Output of the CNN
 yDPN       = np.zeros((10,iteraciones));  # Desired output 
 sourc      = np.zeros((iteraciones,2));  # Input image source
 
+iteraciones = 1
 #Training of the CNN
 for K in range(iteraciones):
+    print(K)
     #LR = LR + 0.2000e-07;   # The learning rate LR increases 0.2000e-07 
                             # each iteration
     try_nan = 0;            #Flag to avoid not a number (NaN) values
     
     # Obtain the input image from the training set by random selection
-    while try_nan < 1 :
-        #sp  = floor(rand(1,1)*(10e3-1))+1
-        sp = math.floor(random.random() * (10**4 - 1)) + 1 #Variente de la funcion floor
-        X0 = dataset["Amnist"][:, :, sp]
-        # YD = (1+exp(-ZP_lab(:,sp))).^-1   
+    
+    #sp  = floor(rand(1,1)*(10e3-1))+1
+    sp = math.floor(random.random() * (int(10e3) - 1)) + 1 #Variente de la funcion floor
+    X0 = dataset["Amnist"][:, :, sp]
 
-        yd  = dataset["label_A"][sp]
+    yd  = dataset["label_A"][sp]
+    print(f"yd->->:{yd}")
 
-        # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
-        YD = np.zeros(10, dtype=int)
-        YD[yd] = 1
-        #YD = FCC.switch(yd)
+    plt.imshow(X0, cmap='gray')  # cmap='gray' para mostrar la imagen en escala de grises
+    plt.axis('off')  # Para ocultar los ejes
+    plt.show()
 
-    try_nan = 0
+    # YD = (1+exp(-ZP_lab(:,sp))).^-1   
+
+    
+
+    # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
+    YD = np.zeros((10,), dtype=int)
+    YD[yd] = 1
+
     # Obtain the input image from the test set by random selection
-    while try_nan < 1:
-        #sp_test  = floor(rand(1,1)*(59999-1))+1;
-        sp_test = math.floor(random.random() * (60000 - 1)) + 1
-        X0_test  = dataset["Bmnist"][:, :, sp_test]
-        # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
+    #sp_test  = floor(rand(1,1)*(59999-1))+1;
+    sp_test = math.floor(random.random() * (59999 - 1)) + 1
+    X0_test  = dataset["Bmnist"][:, :, sp_test]
+    # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
-        yd  = dataset["label_B"][sp_test]
+    yd  = dataset["label_B"][sp_test]
 
-        YD_test = np.zeros(10, dtype=int)
-        YD_test[yd] = 1
+    YD_test = np.zeros((10,), dtype=int)
+    YD_test[yd] = 1
 
-        if np.isnan(X0_test) == 0:
-            try_nan=1
-        else:
-            keep1 = sp_test
-
-    sourc[K, 1] = sp
-    sourc[K, 2] = sp_test
+    sourc[K, 0] = sp
+    sourc[K, 1] = sp_test
 
     #######################################################################
     #                         Test run of the CNN
     #
     for km in range(cnn_M0):
         sm1 = np.zeros_like(Y0[:, :, 0])
+        #print(sm1.shape)
+        print(dataset["Bmnist"][:, :, 0].shape)
         for kd in range(cnn_D0):
             #-----------------------------------------------#
             am1 = np.zeros((9,9))                           #
@@ -213,7 +190,7 @@ for K in range(iteraciones):
         sm1 = np.zeros_like(Y1[:, :, 0])
         for kd in range(cnn_D1):
             #-----------------------------------------------#
-            am1 = np.zeros((5,5))                          #
+            am1 = np.zeros((5,5))                           #
             for q1 in range(5):                             #
                 for q2 in range(5):                         #
                     am1[q1, q2] = W1[4-q1, 4-q2, kd, km]#

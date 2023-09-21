@@ -9,13 +9,13 @@ def cargar_archivos():
     Bmnist_V2 = loadmat('Archivos_buap/Bmnist_V2.mat')
     index_B_V2 = loadmat('Archivos_buap/index_B_V2.mat')
 
-    label_A = np.zeros((10**4, 1), dtype=int)
+    label_A = np.zeros(int(10e3), dtype=int)
 
     a = 0
     x = 0
     for i in range(10):
         b = int(a + index_A["index_A"][i][0])
-        label_A[a:b+1][0] = x
+        label_A[a:b] = x
         x += 1
         a = b
         
@@ -29,6 +29,13 @@ for i in range(10):
         print(label_A[j], end=' ')
     print()
     a = d
+'''
+'''
+dataset = cargar_archivos()
+i=0
+for a in dataset["label_A"]:
+    print(f"{i}->{a}")
+    i += 1
 '''
 
 """
