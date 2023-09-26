@@ -126,7 +126,6 @@ sourc      = np.zeros((iteraciones,2));  # Input image source
 iteraciones = 1
 #Training of the CNN
 for K in range(iteraciones):
-    print(K)
     #LR = LR + 0.2000e-07;   # The learning rate LR increases 0.2000e-07 
                             # each iteration
     try_nan = 0;            #Flag to avoid not a number (NaN) values
@@ -138,11 +137,7 @@ for K in range(iteraciones):
     X0 = dataset["Amnist"][:, :, sp]
 
     yd  = dataset["label_A"][sp]
-    print(f"yd->->:{yd}")
-
-    plt.imshow(X0, cmap='gray')  # cmap='gray' para mostrar la imagen en escala de grises
-    plt.axis('off')  # Para ocultar los ejes
-    plt.show()
+    
 
     # YD = (1+exp(-ZP_lab(:,sp))).^-1   
 
@@ -158,6 +153,10 @@ for K in range(iteraciones):
     X0_test  = dataset["Bmnist"][:, :, sp_test]
     # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
+    plt.imshow(X0_test, cmap='gray')
+    plt.axis('off')
+    plt.show()
+
     yd  = dataset["label_B"][sp_test]
 
     YD_test = np.zeros((10,), dtype=int)
@@ -170,9 +169,7 @@ for K in range(iteraciones):
     #                         Test run of the CNN
     #
     for km in range(cnn_M0):
-        sm1 = np.zeros_like(Y0[:, :, 0])
-        #print(sm1.shape)
-        print(dataset["Bmnist"][:, :, 0].shape)
+        sm1 = np.zeros((20,20))
         for kd in range(cnn_D0):
             #-----------------------------------------------#
             am1 = np.zeros((9,9))                           #
@@ -180,7 +177,11 @@ for K in range(iteraciones):
                 for q2 in range(9):                         #
                     am1[q1, q2] = W0[8-q1, 8-q2, kd, km]#
             #-----------------------------------------------#
-            sm1 += signal.convolve2d(X0_test[:, :, kd], am1, 'valid')
+            sm1 += signal.convolve2d(X0_test, am1, 'valid')
+
+            plt.imshow(sm1, cmap='gray')
+            plt.axis('off')
+            plt.show()
 
         Y0[:, :, km] = np.maximum(sm1 + B0[km],0)
         X1[:, :, km] = Y0[:, :, km]
