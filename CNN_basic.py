@@ -90,6 +90,13 @@ print(f"Y3: {Y3.shape}")
 print(f"Y4: {Y4.shape}")
 print(f"Y5: {Y5.shape}")
 
+print(f"Y0: {B0.shape}")
+print(f"Y1: {B1.shape}")
+print(f"Y2: {B2.shape}")
+print(f"Y3: {B3.shape}")
+print(f"Y4: {B4.shape}")
+print(f"Y5: {B5.shape}")
+
 BIN = 5
 '''
 pesos = [W0, W1, W2, W3,W4,W5]
@@ -183,12 +190,14 @@ for K in range(iteraciones):
             plt.axis('off')
             plt.show()
 
-        Y0[:, :, km] = np.maximum(sm1 + B0[km],0)
-        X1[:, :, km] = Y0[:, :, km]
+        Y0[:, :, km, 0] = np.maximum(sm1 + B0[km,0],0)
+        X1[:, :, km, 0] = Y0[:, :, km, 0]
         # [X1(:,:,km),R1(:,:,:,km)] = max_pool(Y0(:,:,km),2);
 
+    print('capa 2:')
+
     for km in range(cnn_M1):
-        sm1 = np.zeros_like(Y1[:, :, 0])
+        sm1 = np.zeros_like(Y1[:, :, 0, 0])
         for kd in range(cnn_D1):
             #-----------------------------------------------#
             am1 = np.zeros((5,5))                           #
@@ -196,13 +205,14 @@ for K in range(iteraciones):
                 for q2 in range(5):                         #
                     am1[q1, q2] = W1[4-q1, 4-q2, kd, km]#
             #-----------------------------------------------#
-            sm1 += signal.convolve2d(X1[:, :, kd], am1, 'valid')
-        Y1[:, :, km] = np.maximum(sm1 + B1[km],0)
-        X2[:, :, km] = Y1[:, :, km]
+            sm1 += signal.convolve2d(X1[:, :, kd, 0], am1, 'valid')
+
+        Y1[:, :, km, 0] = np.maximum(sm1 + B1[km, 0],0)
+        X2[:, :, km, 0] = Y1[:, :, km, 0]
         # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
 
     for km in range(cnn_M2):
-        sm2 = np.zeros_like(Y2[:, :, 0]) 
+        sm2 = np.zeros_like(Y2[:, :, 0, 0]) 
         for kd in range(cnn_D2):
             #-----------------------------------------------#
             am2 = np.zeros((3,3))                           #
@@ -210,8 +220,14 @@ for K in range(iteraciones):
                 for q2 in range(3):                         #
                     am2[q1, q2] = W2[2-q1, 2-q2, kd, km]#
             #-----------------------------------------------#
-            sm2 += signal.convolve2d(X2[:, :, kd], am2, 'valid')
-        Y2[:, :, km] = np.maximum(sm2 + B2[km], 0)
+            sm2 += signal.convolve2d(X2[:, :, kd, 0], am2, 'valid')
+
+            plt.imshow(sm1, cmap='gray')
+            plt.axis('off')
+            plt.show()
+
+        Y2[:, :, km, 0] = np.maximum(sm2 + B2[km, 0], 0)
+
     X3 = np.reshape(Y2,(Y2.size, 1))
 
     Y3 = W3 @ X3
