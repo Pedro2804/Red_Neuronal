@@ -160,10 +160,6 @@ for K in range(iteraciones):
     X0_test  = dataset["Bmnist"][:, :, sp_test]
     # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
-    plt.imshow(X0_test, cmap='gray')
-    plt.axis('off')
-    plt.show()
-
     yd  = dataset["label_B"][sp_test]
 
     YD_test = np.zeros((10,), dtype=int)
@@ -217,10 +213,6 @@ for K in range(iteraciones):
             #-----------------------------------------------#
             sm1 += signal.convolve2d(X0_test, am1, 'valid')
 
-            plt.imshow(sm1, cmap='gray')
-            plt.axis('off')
-            plt.show()
-
         Y0[:, :, km, 0] = np.maximum(sm1 + B0[km,0],0)
         X1[:, :, km, 0] = Y0[:, :, km, 0]
         # [X1(:,:,km),R1(:,:,:,km)] = max_pool(Y0(:,:,km),2);
@@ -253,13 +245,10 @@ for K in range(iteraciones):
             #-----------------------------------------------#
             sm2 += signal.convolve2d(X2[:, :, kd, 0], am2, 'valid')
 
-            plt.imshow(sm1, cmap='gray')
-            plt.axis('off')
-            plt.show()
-
         Y2[:, :, km, 0] = np.maximum(sm2 + B2[km, 0], 0)
-
-    np.savetxt('capa3.txt', Y2)
+    print(Y2[:, :, 0, 0])
+    for i in range(10):
+        np.savetxt(f'capa3_{i}.txt', Y2[:, :, i, 0])
 
     X3 = np.reshape(Y2,(Y2.size, 1))
 
