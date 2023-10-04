@@ -175,6 +175,35 @@ for K in range(iteraciones):
     #######################################################################
     #                         Test run of the CNN
     #
+    
+    X0p = np.zeros((28,28))
+    for i in range(28):
+        for j in range(28):
+            X0p[i, j] = i + j * 28
+    X0_test = X0p
+
+    W0p = np.zeros((9,9,1,10))
+    for k in range(10):
+        for i in range(9):
+            for j in range(9):
+                W0p[i, j, 0, k] = i + j * 28
+    W0 = W0p
+
+    W1p = np.zeros((9,9,1,10))
+    for k in range(10):
+        for i in range(9):
+            for j in range(9):
+                W1p[i, j, 0, k] = i + j * 28
+    W1 = W1p
+
+    W2p = np.zeros((9,9,1,10))
+    for k in range(10):
+        for i in range(9):
+            for j in range(9):
+                W2p[i, j, 0, k] = i + j * 28
+    W2 = W2p
+
+
     for km in range(cnn_M0):
         sm1 = np.zeros((20,20))
         for kd in range(cnn_D0):
