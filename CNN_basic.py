@@ -186,21 +186,23 @@ for K in range(iteraciones):
     for k in range(10):
         for i in range(9):
             for j in range(9):
-                W0p[i, j, 0, k] = i + j * 28
+                W0p[i, j, 0, k] = i + j * 8
     W0 = W0p
 
-    W1p = np.zeros((9,9,1,10))
-    for k in range(10):
-        for i in range(9):
-            for j in range(9):
-                W1p[i, j, 0, k] = i + j * 28
+    W1p = np.zeros((5,5,10,10))
+    for i in range(5):
+        for j in range(5):
+            for k in range(10):
+                for l in range(10):
+                    W1p[i, j, k, l] = i + j * 4
     W1 = W1p
 
-    W2p = np.zeros((9,9,1,10))
-    for k in range(10):
-        for i in range(9):
-            for j in range(9):
-                W2p[i, j, 0, k] = i + j * 28
+    W2p = np.zeros((3,3,10,10))
+    for i in range(3):
+        for j in range(3):
+            for k in range(10):
+                for l in range(10):
+                    W2p[i, j, k, l] = i + j * 2
     W2 = W2p
 
 
@@ -256,6 +258,8 @@ for K in range(iteraciones):
             plt.show()
 
         Y2[:, :, km, 0] = np.maximum(sm2 + B2[km, 0], 0)
+
+    np.savetxt('capa3.txt', Y2)
 
     X3 = np.reshape(Y2,(Y2.size, 1))
 
