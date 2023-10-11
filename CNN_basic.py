@@ -1,6 +1,7 @@
 import view_dataset as vds
 import layer_CNN as CNN
 import layer_FCC as FCC
+import full_conv as FC
 import numpy as np
 import random
 from scipy import signal
@@ -171,7 +172,7 @@ for K in range(iteraciones):
     #######################################################################
     #                         Test run of the CNN
     #
-    
+    '''
     X0p = np.zeros((28,28))
     for i in range(28):
         for j in range(28):
@@ -200,7 +201,7 @@ for K in range(iteraciones):
                 for l in range(10):
                     W2p[i, j, k, l] = i + j * 2
     W2 = W2p
-
+    '''
 
     for km in range(cnn_M0):
         sm1 = np.zeros((20,20))
@@ -270,7 +271,7 @@ for K in range(iteraciones):
     ###########################################################
     #                     Test run of the CNN
     for km in range(cnn_M0):
-        sm1 = np.zeros_like(Y0[:, :, 0])
+        sm1 = np.zeros_like(Y0[:, :, 0, 0])
         for kd in range(cnn_D0):
             #-----------------------------------------------#
             am1 = np.zeros((9, 9))
@@ -278,12 +279,12 @@ for K in range(iteraciones):
                 for q2 in range(9):
                     am1[q1, q2] = W0[8 - q1, 8 - q2, kd, km]
             #-----------------------------------------------#
-            sm1 += signal.convolve2d(X0[:, :, kd], am1, 'valid')
-        Y0[:, :, km] = np.maximum(sm1 + B0[km], 0)
+            sm1 += signal.convolve2d(X0, am1, 'valid')
+        Y0[:, :, km, 0] = np.maximum(sm1 + B0[km], 0)
         X1[:, :, km] = Y0[:, :, km]
 
     for km in range(cnn_M1):
-        sm1 = np.zeros_like(Y1[:, :, 0])
+        sm1 = np.zeros_like(Y1[:, :, 0, 0])
         for kd in range(cnn_D1):
             #-----------------------------------------------#
             am1 = np.zeros((5,5));                          #
@@ -291,13 +292,13 @@ for K in range(iteraciones):
                 for q2 in range(5):                         #
                     am1[q1, q2] = W1[4-q1, 4-q2, kd, km] #
             #-----------------------------------------------#
-            sm1 += signal.convolve2d(X1[:,:,kd],am1, 'valid')
-        Y1[:,:,km] = np.maximum(sm1 + B1[km],0)
+            sm1 += signal.convolve2d(X1[:,:,kd,0],am1, 'valid')
+        Y1[:,:,km,0] = np.maximum(sm1 + B1[km],0)
         X2[:, :, km] = Y1[:, :, km]
         # [X2(:,:,km),R2(:,:,:,km)] = max_pool(Y1(:,:,km),2);
 
     for km in range(cnn_M2):
-        sm2 = np.zeros_like(Y2[:, :, 0])
+        sm2 = np.zeros_like(Y2[:, :, 0,0])
         for kd in range(cnn_D2):
             #-----------------------------------------------#
             am2 = np.zeros((3,3));                          #
@@ -305,8 +306,8 @@ for K in range(iteraciones):
                 for q2 in range(3):                         #
                     am2[q1, q2] = W2[2-q1, 2-q2, kd, km]#
             #-----------------------------------------------#
-            sm2 += signal.convolve2d(X2[:, :, kd],am2, 'valid')
-        Y2[:, :, km] = np.maximum(sm2 + B2[km],0)
+            sm2 += signal.convolve2d(X2[:, :, kd,0],am2, 'valid')
+        Y2[:, :, km,0] = np.maximum(sm2 + B2[km],0)
 
     X3 = np.reshape(Y2, (Y2.size, 1))
 
@@ -326,9 +327,9 @@ for K in range(iteraciones):
 
     YD_neg = YD
     Y5_neg = Y5
-
+    
     E[K] = 0.5*np.mean((YD-Y5)**2 )
-    yCNN[:,K] = Y5
+    yCNN[:,K] = Y5[:,0]
     yDPN[:,K] = YD
 
     if (K-1 % 1e3) == 999:
@@ -376,6 +377,7 @@ for K in range(iteraciones):
     
     # Back propagation error
     if test_set == 0:
+        YD = np.reshape(YD, (10,1))
         dE5 = (Y5 - YD) * MT
         dF5 = c1 * Y5 * (1 - Y5)
 
@@ -401,8 +403,10 @@ for K in range(iteraciones):
 
         dE2f = W3.T @ dC3
 
-        dE2 = np.reshape(dE2f, (14, 14, 10))
+        dE2 = np.reshape(dE2f, (14, 14, 10, 1))
         dF2 = np.sign(Y2)
+        print(dE2.shape)
+        print(dF2.shape)
         dC2 = dE2 * dF2
 
         dW2 = np.zeros_like(W2)
@@ -413,22 +417,22 @@ for K in range(iteraciones):
             
             for q1 in range(14):
                 for q2 in range(14):
-                    dCs2[q1,q2] = dC2[13 - q1, 13 - q2, km]
+                    dCs2[q1,q2] = dC2[13 - q1][13 - q2][km] #--------------------AQUI-------------------------------------------
 
             for kd in range(cnn_D2):
-                dW2[:,:,kd,km] = -LR * signal.convolve2d(X2[:,:,kd], dCs2, 'valid')
+                dW2[:,:,kd,km] = -LR * signal.convolve2d(X2[:,:,kd,0], dCs2, 'valid')
             
             dB2[km] = -LR * np.sum(dCs2)
 
         dE1p = np.zeros_like(X2)
 
         for kd in range(cnn_D2):
-            aq1 = np.zeros_like(dE1p[:, :, 0])
+            aq1 = np.zeros_like(dE1p[:, :, 0, 0])
             
             for km in range(cnn_M2):
-                aq1 += signal.convolve2d(dC2[:, :, km], W2[:, :, kd, km], 'valid')
+                aq1 += FC.full_conv(dC2[:, :, km, 0], W2[:, :, kd, km])
             
-            dE1p[:, :, kd] = aq1
+            dE1p[:, :, kd, 0] = aq1
 
         dE1 = dE1p
 
@@ -446,19 +450,19 @@ for K in range(iteraciones):
                     dCs1[q1, q2] = dC1[15 - q1, 15 - q2, km]
 
             for kd in range(cnn_D1):
-                dW1[:, :, kd, km] = -LR * signal.convolve2d(X1[:, :, kd], dCs1, 'valid')
+                dW1[:, :, kd, km] = -LR * signal.convolve2d(X1[:, :, kd, 0], dCs1, 'valid')
             
             dB1[km] = -LR * np.sum(dCs1)
         
         dE0p = np.zeros_like(X1)
 
         for kd in range(cnn_D1):
-            aq0 = np.zeros_like(dE0p[:, :, 0])
+            aq0 = np.zeros_like(dE0p[:, :, 0, 0])
             
             for km in range(cnn_M1):
-                aq0 += signal.convolve2d(dC1[:, :, km], W1[:, :, kd, km], 'valid')
+                aq0 += FC.full_conv(dC1[:, :, km, 0], W1[:, :, kd, km])
             
-            dE0p[:, :, kd] = aq0
+            dE0p[:, :, kd, 0] = aq0
 
         dE0 = dE0p
 
@@ -476,7 +480,7 @@ for K in range(iteraciones):
                     dCs0[q1, q2] = dC0[19 - q1, 19 - q2, km]
 
             for kd in range(cnn_D0):
-                dW0[:, :, kd, km] = -LR * signal.convolve2d(X0[:, :, kd], dCs0, 'valid')
+                dW0[:, :, kd, km] = -LR * signal.convolve2d(X0, dCs0, 'valid')
             
             dB0[km] = -LR * np.sum(dCs0)
 
