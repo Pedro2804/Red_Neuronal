@@ -76,7 +76,7 @@ if test_set == 0 :
         X3, Y3, W3, B3 = FCC.layer_fcc(1960, 100, 1)
         X4, Y4, W4, B4 = FCC.layer_fcc(100, 100, 1)
         X5, Y5, W5, B5 = FCC.layer_fcc(100, 10, 1)
-
+'''
 print(f"X0: {X0.shape}")
 print(f"X1: {X1.shape}")
 print(f"X2: {X2.shape}")
@@ -99,7 +99,7 @@ print(f"Y4: {B4.shape}")
 print(f"Y5: {B5.shape}")
 
 BIN = 5
-'''
+
 pesos = [W0, W1, W2, W3,W4,W5]
 titulo_histograma = ['Histograma w0', 'Histograma w1', 'Histograma w2', 'Histograma w3','Histograma w4','Histograma w5']
 for i, W in enumerate(pesos):
@@ -131,7 +131,7 @@ yCNN       = np.zeros((10,iteraciones));  # Output of the CNN
 yDPN       = np.zeros((10,iteraciones));  # Desired output 
 sourc      = np.zeros((iteraciones,2));  # Input image source
 
-iteraciones = 1
+#iteraciones = 1
 #Training of the CNN
 for K in range(iteraciones):
     #LR = LR + 0.2000e-07;   # The learning rate LR increases 0.2000e-07 
@@ -218,7 +218,7 @@ for K in range(iteraciones):
         X1[:, :, km, 0] = Y0[:, :, km, 0]
         # [X1(:,:,km),R1(:,:,:,km)] = max_pool(Y0(:,:,km),2);
 
-    print('capa 2:')
+    #print('capa 2:')
 
     for km in range(cnn_M1):
         sm1 = np.zeros_like(Y1[:, :, 0, 0])
@@ -247,7 +247,7 @@ for K in range(iteraciones):
             sm2 += signal.convolve2d(X2[:, :, kd, 0], am2, 'valid')
 
         Y2[:, :, km, 0] = np.maximum(sm2 + B2[km, 0], 0)
-    print(Y2[:, :, 0, 0])
+    #print(Y2[:, :, 0, 0])
     for i in range(10):
         np.savetxt(f'capa3_{i}.txt', Y2[:, :, i, 0])
 
@@ -332,7 +332,8 @@ for K in range(iteraciones):
     yCNN[:,K] = Y5[:,0]
     yDPN[:,K] = YD
 
-    if (K-1 % 1e3) == 999:
+    #if (K-1 % 1e3) == 999:
+    if (np.cos(K * math.pi * 0.01) == 0):
         Q1 = E[K-999:K]
         Q2 = Etest[K-999:K]
 
@@ -342,7 +343,8 @@ for K in range(iteraciones):
         # Calcular las medias de Q1 y Q2
         mean_Q1 = np.mean(Q1, axis=0)
         mean_Q2 = np.mean(Q2, axis=0)
-
+        print(mean_Q1)
+        print(mean_Q2)
         # Crear el gráfico semilogarítmico con el valor de K en el eje x
         K = 123  # Reemplaza 123 con el valor entero de K que desees
         plt.semilogy([K], mean_Q1, 'b.', label='Q1')
@@ -405,8 +407,8 @@ for K in range(iteraciones):
 
         dE2 = np.reshape(dE2f, (14, 14, 10, 1))
         dF2 = np.sign(Y2)
-        print(dE2.shape)
-        print(dF2.shape)
+        #print(dE2.shape)
+        #print(dF2.shape)
         dC2 = dE2 * dF2
 
         dW2 = np.zeros_like(W2)
