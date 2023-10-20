@@ -63,6 +63,8 @@ sobre_train = 0    #Flag to train the CNN from the actual kernels and
 #                               V
 #                       [Output: 10x1 size]
 
+const = 3e-4
+
 if test_set == 0 :
     if sobre_train == 0 :
         cnn_D0, cnn_M0 = 1, 10
@@ -131,6 +133,8 @@ yCNN       = np.zeros((10,iteraciones));  # Output of the CNN
 yDPN       = np.zeros((10,iteraciones));  # Desired output 
 sourc      = np.zeros((iteraciones,2));  # Input image source
 
+contador_mostrar = 0
+
 #iteraciones = 1
 #Training of the CNN
 for K in range(iteraciones):
@@ -172,19 +176,23 @@ for K in range(iteraciones):
     #######################################################################
     #                         Test run of the CNN
     #
-    '''
+
     X0p = np.zeros((28,28))
     for i in range(28):
         for j in range(28):
             X0p[i, j] = i + j * 28
     X0_test = X0p
+    X0 = X0p
+
+    #plt.imshow(X0p/812)
+    #plt.show()
 
     W0p = np.zeros((9,9,1,10))
     for k in range(10):
         for i in range(9):
             for j in range(9):
                 W0p[i, j, 0, k] = i + j * 8
-    W0 = W0p
+    W0 = W0p*const
 
     W1p = np.zeros((5,5,10,10))
     for i in range(5):
@@ -192,7 +200,7 @@ for K in range(iteraciones):
             for k in range(10):
                 for l in range(10):
                     W1p[i, j, k, l] = i + j * 4
-    W1 = W1p
+    W1 = W1p*const
 
     W2p = np.zeros((3,3,10,10))
     for i in range(3):
@@ -200,8 +208,33 @@ for K in range(iteraciones):
             for k in range(10):
                 for l in range(10):
                     W2p[i, j, k, l] = i + j * 2
-    W2 = W2p
-    '''
+    W2 = W2p*const
+
+    W3p = np.zeros((100, 1960))
+    for i in range(100):
+        for j in range(1960):
+            W3p[i, j] = i + j * 10
+    
+    W4p = np.zeros((100, 100))
+    for i in range(100):
+        for j in range(100):
+            W4p[i, j] = i + j * 10
+    
+    W5p = np.zeros((10, 100))
+    for i in range(10):
+        for j in range(100):
+            W5p[i, j] = i + j * 10
+    
+    W3 = W3p*const
+    W4 = W4p*const
+    W5 = W5p*const
+
+    B0 = 0*B0
+    B1 = 0*B1
+    B2 = 0*B2
+    B3 = 0*B3
+    B4 = 0*B4
+    B5 = 0*B5
 
     for km in range(cnn_M0):
         sm1 = np.zeros((20,20))
@@ -218,7 +251,9 @@ for K in range(iteraciones):
         X1[:, :, km, 0] = Y0[:, :, km, 0]
         # [X1(:,:,km),R1(:,:,:,km)] = max_pool(Y0(:,:,km),2);
 
-    #print('capa 2:')
+    #print(X1[0:3, 0:3, 0, 0])
+    #print(am1[0:3, 0:3])
+    #break
 
     for km in range(cnn_M1):
         sm1 = np.zeros_like(Y1[:, :, 0, 0])
@@ -248,23 +283,36 @@ for K in range(iteraciones):
 
         Y2[:, :, km, 0] = np.maximum(sm2 + B2[km, 0], 0)
     #print(Y2[:, :, 0, 0])
-    for i in range(10):
-        np.savetxt(f'capa3_{i}.txt', Y2[:, :, i, 0])
 
-    X3 = np.reshape(Y2,(Y2.size, 1))
+    #print(Y2[0:3, 0:3, 0, 0])
+    #break
+
+    #for i in range(10):
+    #    np.savetxt(f'capa3_{i}.txt', Y2[:, :, i, 0])
+
+    X3 = np.reshape(Y2.T,(Y2.size, 1))
 
     Y3 = W3 @ X3
+    print(f'Y3: {Y3[0:10]}')
     #Función RELU: convierte todos los valores negativos en 0, dejando los valores no negativos sin cambios.
     Y3 = np.maximum(Y3 + 1. * B3, 0)
+    print(f'Y3 max: {Y3[0:10]}')
+
     
     X4  = Y3
     Y4 = W4 @ X4
-    Y3 = np.maximum(Y4 + 1. * B4, 0)
+    Y4 = np.maximum(Y4 + 1. * B4, 0)
+
+    print(W5[:3, :3])
+    
+    print(X3[:3])
+    print(Y2[:3, :3, 0, 0])
 
     X5  = Y4
     Y5 = W5 @ X5
 
-    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)))
     #Error cuadrático medio
     Etest[K] = 0.5*(np.mean((YD_test - Y5)**2))
 
@@ -309,21 +357,31 @@ for K in range(iteraciones):
             sm2 += signal.convolve2d(X2[:, :, kd,0],am2, 'valid')
         Y2[:, :, km,0] = np.maximum(sm2 + B2[km],0)
 
-    X3 = np.reshape(Y2, (Y2.size, 1))
+    #print(Y2.size)
+    X3 = np.reshape(Y2.T, (Y2.size, 1))
 
     Y3 = W3 @ X3
     Y3 = np.maximum(Y3 + 1. * B3, 0)
 
     X4  = Y3
     Y4 = W4 @ X4
-    Y3 = np.maximum(Y4 + 1. * B4, 0)
+    Y4 = np.maximum(Y4 + 1. * B4, 0)
 
     X5  = Y4
     Y5 = W5 @ X5
 
     Y5_past = Y5
     #Funcion Softmax
-    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)), axis=1, keepdims=True)
+    Y5 = np.exp(c1 * (Y5 + B5)) / np.sum(np.exp(c1 * (Y5 + B5)))
+    print(f'Y5_past: {Y5_past}')
+    print(f'Y5 {Y5[:3]}')
+
+    plt.imshow(X0)
+    
+    print(YD)
+    plt.show()
+    cprueba = input()
+    #print(np.sum(Y5))
 
     YD_neg = YD
     Y5_neg = Y5
@@ -332,8 +390,9 @@ for K in range(iteraciones):
     yCNN[:,K] = Y5[:,0]
     yDPN[:,K] = YD
 
-    #if (K-1 % 1e3) == 999:
-    if (np.cos(K * math.pi * 0.01) == 0):
+    print(contador_mostrar)
+    if (contador_mostrar == 999):
+        #if (math.cos(K * math.pi * 0.01) == 0):
         Q1 = E[K-999:K]
         Q2 = Etest[K-999:K]
 
@@ -343,8 +402,8 @@ for K in range(iteraciones):
         # Calcular las medias de Q1 y Q2
         mean_Q1 = np.mean(Q1, axis=0)
         mean_Q2 = np.mean(Q2, axis=0)
-        print(mean_Q1)
-        print(mean_Q2)
+        print(E[K])
+        print(Etest[K])
         # Crear el gráfico semilogarítmico con el valor de K en el eje x
         K = 123  # Reemplaza 123 con el valor entero de K que desees
         plt.semilogy([K], mean_Q1, 'b.', label='Q1')
@@ -376,20 +435,29 @@ for K in range(iteraciones):
 
         # Mostrar el gráfico
         plt.show()
+
+        contador_mostrar = 0
+    else:
+        contador_mostrar += 1
     
     # Back propagation error
     if test_set == 0:
         YD = np.reshape(YD, (10,1))
         dE5 = (Y5 - YD) * MT
+        print(f'dE5 {dE5[:3]}')
         dF5 = c1 * Y5 * (1 - Y5)
 
         dC5 = dE5 * dF5
         dW5 = -LR * X5.T * dC5
         dB5 = -LR * dC5
 
-        dE4 = W5.T @ dC5
+        dE4 = W5.T @ np.reshape(dC5, (10, 1))
         dF4 = np.sign(Y4)
         dC4 = dE4 * dF4
+        print(f'dE4 {dE4[:3]}')
+        print(f'W5.T {W5.T[:3, :3]}')
+
+        break
 
         dW4 = dC4 @ X4.T
         dW4 = -LR * dW4
