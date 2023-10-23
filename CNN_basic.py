@@ -451,17 +451,29 @@ for K in range(iteraciones):
         dW5 = -LR * X5.T * dC5
         dB5 = -LR * dC5
 
-        dE4 = W5.T @ np.reshape(dC5, (10, 1))
-        dF4 = np.sign(Y4)
-        dC4 = dE4 * dF4
-        print(f'dE4 {dE4[:3]}')
+        dC5 = np.reshape(dC5, (10, 1))
+
+        print(f'W5 shape: {W5.shape}')
+        print(f'dC5 shape: {dC5.shape}')
+        print(f'dC5 {dC5[:3]}')
         print(f'W5.T {W5.T[:3, :3]}')
 
-        break
+        dE4 = W5.T @ dC5
+
+        print(f'dE4 {dE4[:3]}')
+
+        dF4 = np.sign(Y4)
+        dC4 = dE4 * dF4
 
         dW4 = dC4 @ X4.T
         dW4 = -LR * dW4
         dB4 = -LR * dC4
+
+        print(f'dW4 {dW4[:3, :3]}')
+        print(f'dB4 {dB4[:3]}')
+
+
+        break
 
         dE3 = W4.T @ dC4
         dF3 = np.sign(Y3)
