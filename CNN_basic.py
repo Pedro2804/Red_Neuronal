@@ -13,8 +13,7 @@ dataset = vds.cargar_archivos()
 #Variable initialization
 LR	= 10e-3        #Initial learning rate
 MT	= 100          #Loss function modifier for backpropagation algorithm
-# c1	= 1.4e-4;       #Constant for adjusting the output layer of the CNN
-c1	= 1e-5 
+c1	= 1e-5         #Constant for adjusting the output layer of the CNN
 
 test_set    = 0    #Flag to select between training the CNN or only test 
                     #the CNN
@@ -188,19 +187,17 @@ for K in range(iteraciones):
     #plt.show()
 
     W0p = np.zeros((9,9,1,10))
-    for k in range(10):
-        for i in range(9):
-            for j in range(9):
+    for i in range(9):
+        for j in range(9):
+            for k in range(10):
                 W0p[i, j, 0, k] = i + j * 8
-    W0 = W0p*const
-
+    
     W1p = np.zeros((5,5,10,10))
     for i in range(5):
         for j in range(5):
             for k in range(10):
                 for l in range(10):
                     W1p[i, j, k, l] = i + j * 4
-    W1 = W1p*const
 
     W2p = np.zeros((3,3,10,10))
     for i in range(3):
@@ -208,7 +205,6 @@ for K in range(iteraciones):
             for k in range(10):
                 for l in range(10):
                     W2p[i, j, k, l] = i + j * 2
-    W2 = W2p*const
 
     W3p = np.zeros((100, 1960))
     for i in range(100):
@@ -224,7 +220,19 @@ for K in range(iteraciones):
     for i in range(10):
         for j in range(100):
             W5p[i, j] = i + j * 10
+
+    print('inicio')
+    print(f'W0 shape: {W0.shape}')
+    print(f'W1 shape: {W1.shape}')
+    print(f'W2 shape: {W2.shape}')
+    print(f'W3 shape: {W3.shape}')
+    print(f'W4 shape: {W4.shape}')
+    print(f'W5 shape: {W5.shape}')
+    print('****************')
     
+    W0 = W0p*const
+    W1 = W1p*const
+    W2 = W2p*const
     W3 = W3p*const
     W4 = W4p*const
     W5 = W5p*const
@@ -235,6 +243,14 @@ for K in range(iteraciones):
     B3 = 0*B3
     B4 = 0*B4
     B5 = 0*B5
+
+    print(f'Bs:{B0.shape}')
+    print(f'Bs:{B1.shape}')
+    print(f'Bs:{B2.shape}')
+    print(f'Bs:{B3.shape}')
+    print(f'Bs:{B4.shape}')
+    print(f'Bs:{B5.shape}')
+
 
     for km in range(cnn_M0):
         sm1 = np.zeros((20,20))
@@ -376,11 +392,9 @@ for K in range(iteraciones):
     print(f'Y5_past: {Y5_past}')
     print(f'Y5 {Y5[:3]}')
 
-    plt.imshow(X0)
-    
     print(YD)
-    plt.show()
-    cprueba = input()
+    #plt.imshow(X0)
+    #plt.show()
     #print(np.sum(Y5))
 
     YD_neg = YD
