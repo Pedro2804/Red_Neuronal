@@ -253,7 +253,7 @@ for K in range(iteraciones):
 
 
     for km in range(cnn_M0):
-        sm1 = np.zeros((20,20))
+        sm1 = np.zeros_like(Y0[:,:,0,0])
         for kd in range(cnn_D0):
             #-----------------------------------------------#
             am1 = np.zeros((9,9))                           #
@@ -428,7 +428,7 @@ for K in range(iteraciones):
         plt.ylabel('Mean')
         plt.legend()
 
-        axf = np.argmax(Y5_neg) - 1
+        axf = np.argmax(Y5_neg)
 
         mxmp = np.zeros(10)
         mxmp[axf] = 1
