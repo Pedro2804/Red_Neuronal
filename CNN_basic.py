@@ -8,6 +8,8 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import math
 
+#random.seed(1)
+
 dataset = vds.cargar_archivos()
 
 #Variable initialization
@@ -144,32 +146,23 @@ for K in range(iteraciones):
     # Obtain the input image from the training set by random selection
     
     #sp  = floor(rand(1,1)*(10e3-1))+1
-    sp = math.floor(random.random() * (int(10e3) - 1)) + 1 #Variente de la funcion floor
-    X0 = dataset["Amnist"][:, :, sp]
+    #sp = math.floor(random.random() * (int(10e3) + 1)) #Variente de la funcion floor
+    X0 = dataset["Amnist"][:, :, 2]
 
-    yd  = dataset["label_A"][sp]
-    
-
-    # YD = (1+exp(-ZP_lab(:,sp))).^-1   
-
-    
-
-    # YD = 1./(1+exp(-  (2.*yd_trt-1)   ));
+    yd  = dataset["label_A"][2]
     YD = np.zeros((10,), dtype=int)
     YD[yd] = 1
 
     # Obtain the input image from the test set by random selection
-    #sp_test  = floor(rand(1,1)*(59999-1))+1;
-    sp_test = math.floor(random.random() * (59999 - 1)) + 1
+   
+    sp_test = math.floor(random.random() * (60000 + 1))
     X0_test  = dataset["Bmnist"][:, :, sp_test]
-    # YD_test  = (1+exp(-ZP_lab(:,sp_test))).^-1; 
 
     yd  = dataset["label_B"][sp_test]
-
     YD_test = np.zeros((10,), dtype=int)
     YD_test[yd] = 1
 
-    sourc[K, 0] = sp
+    sourc[K, 0] = 2
     sourc[K, 1] = sp_test
 
     #######################################################################
@@ -180,6 +173,7 @@ for K in range(iteraciones):
     for i in range(28):
         for j in range(28):
             X0p[i, j] = i + j * 28
+    print(f'\t\t\t->xop={X0p.shape}')
     X0_test = X0p
     X0 = X0p
 
